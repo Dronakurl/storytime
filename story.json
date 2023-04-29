@@ -1,0 +1,22 @@
+{
+    "initial": {
+        "text": "Initialer Dialo asdg",
+        "choices": {
+            "1": {"text": "zu erstem Dialog", "nextdialogid": "eins"},
+            "2": {"text": "zu zweitem Dialog", "nextdialogid": "zwei"}
+        }
+    },
+    "eins": {
+        "text": "erster Dialog",
+        "choices": {
+            "1": {"text": "zum zweiten Dialog", "nextdialogid": "zwei"}
+        }
+    },
+    "zwei": {
+        "text": "zweiter Dialog",
+        "choices": {
+            "1": {"text": "wieder zu eins", "nextdialogid": "eins"},
+            "2": {"text": "zurück", "nextdialogid": "initial"}
+        }
+    }
+}

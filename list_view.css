@@ -1,0 +1,48 @@
+
+Screen {
+    align: center middle;
+}
+
+ListView {
+    width: 100%;
+    height: auto;
+    margin: 1;
+}
+
+Label {
+    padding:1;
+}
+
+#layout {
+    layout: grid;
+    grid-size:3 2;
+    width:100%;
+}
+
+#text {
+    column-span: 2;
+    height:100%;
+    background:$primary-background;
+    color:white;
+    margin:1;
+    padding:1;
+}
+
+#choices {
+    align-horizontal:center;
+}
+
+#choicecontainer {
+    align-horizontal:center;
+    column-span: 2;
+    background:$surface;
+    height: 100%;
+}
+
+TextLog {
+    height:100%;
+    row-span: 2;
+    padding:1;
+    background:$panel-lighten-3;
+    margin:1;
+}
