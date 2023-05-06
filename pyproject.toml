@@ -31,21 +31,20 @@ typeCheckingMode = "off"
 reportGeneralTypeIssues = false
 reportMissingTypeStubs = false
 useLibraryCodeForTypes = false
-pythonVersion = "3.10"
+pythonVersion = "3.11"
 pythonPlatform = "Linux"
 
-# [tool.pytest.ini_options]
-# minversion = "6.0"
-# addopts = [
-#     "--import-mode=importlib",
-#     "-ra -q",
-#     "--disable-warnings",
-#     "--ignore=Archiv",
-#     "--ignore=test_models.py",
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+    "--import-mode=importlib",
+    "-ra -q",
+    "--disable-warnings",
+    "--ignore=Archiv",
+]
+pythonpath = ["."]
+# testpaths = [
+#     "spider/test",
+#     "imgclass/test",
+#     "utils/test",
 # ]
-# pythonpath = ["."]
-# # testpaths = [
-# #     "spider/test",
-# #     "imgclass/test",
-# #     "utils/test",
-# # ]
