@@ -1,6 +1,6 @@
 import json
-import re
 from pathlib import Path
+import re
 
 class Choice:
     def __init__(self, text: str, nextdialogid: str):
@@ -60,6 +60,8 @@ class PathWithDict(Path):
 
     def __dict__(self):
         return {"path": self.__str__()}
+
+
 class Story:
     def __init__(self, dialogs: dict[str, Dialog], title: str = "Story", state: dict = {}):
         self.dialogs = dialogs
@@ -78,9 +80,9 @@ class Story:
         return json.dumps(self, default=lambda o: o.__dict__, indent=4)
 
     def to_Markdown(self):
-        res = f"# {self.title}\n\n" 
+        res = f"# {self.title}\n\n"
         res += "\n\n".join([self.dialogs[x].to_Markdown() for x in self.dialogs])
-        res=res.strip()
+        res = res.strip()
         return res
 
     def __repr__(self):

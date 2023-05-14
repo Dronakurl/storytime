@@ -6,9 +6,9 @@ from textual import events
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container
+from textual.message import Message
 from textual.reactive import reactive
 from textual.screen import Screen
-from textual.message import Message
 from textual.widgets import Footer, Header
 from textual.widgets import (
     DirectoryTree,
