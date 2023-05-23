@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import re
 
+
 class Choice:
     def __init__(self, text: str, nextdialogid: str):
         self.nextdialogid = nextdialogid
@@ -29,10 +30,15 @@ class Choice:
 
 
 class Dialog:
-    def __init__(self, dialogid: str, text: str, choices: dict[str, Choice]):
+    def __init__(self, dialogid: str, text: str, choices: dict[str, Choice], logic: str = ""):
         self.dialogid = dialogid
         self.text = text
         self.choices = choices
+        self.logic = logic
+
+    def addchoice(self, text: str, nextdialogid: str):
+        choice = Choice(text, nextdialogid)
+        self.choices[choice.nextdialogid] = choice
 
     def __repr__(self):
         return f"Dialog({self.dialogid}, {self.text}, {self.choices})"
@@ -47,19 +53,17 @@ class Dialog:
     def choices_to_Markdown(self):
         return "\n\n".join([self.choices[x].to_Markdown() for x in self.choices])
 
+    def write_logic(self):
+        # each line is prefixed with "LOGIC: "
+        if self.logic.strip() == "":
+            return ""
+        return "\n".join([f"LOGIC {x}" for x in self.logic.split("\n")]) + "\n\n"
+
     def to_Markdown(self):
-        return f"## {self.dialogid}\n{self.text}\n{self.choices_to_Markdown()}"
+        return f"## {self.dialogid}\n{self.write_logic()}{self.text}\n{self.choices_to_Markdown()}"
 
     def __eq__(self, other):
         return self.toJson() == other.toJson()
-
-
-class PathWithDict(Path):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def __dict__(self):
-        return {"path": self.__str__()}
 
 
 class Story:
@@ -69,7 +73,9 @@ class Story:
         self.prevdialogids = [list(dialogs.keys())[0]]
         self.title = title
         self.state = state
-        self.markdown_file = PathWithDict("story.md")
+        self.markdown_file = "story.md"
+        self.properties = {}
+        self.exec_logic()
 
     @classmethod
     def from_dict(cls, data: dict, title: str = "Story"):
@@ -92,12 +98,18 @@ class Story:
         return self.toJson() == other.toJson()
 
     def save_markdown(self):
-        with open(self.markdown_file, "w") as f:
+        with open(Path(self.markdown_file), "w") as f:
             f.write(self.to_Markdown())
 
     def next_dialog(self, nextdialogid: str):
         self.prevdialogids.append(self.currentdialog.dialogid)
         self.currentdialog = self.dialogs[nextdialogid]
+        logmsg = self.currentdialog.logic
+        self.exec_logic()
+        return logmsg
+
+    def addchoice(self, text: str, nextdialogid: str):
+        self.currentdialog.addchoice(text, nextdialogid)
 
     def back_dialog(self):
         print(self.prevdialogids)
@@ -106,6 +118,30 @@ class Story:
         else:
             prvdiag = self.prevdialogids[0]
         self.currentdialog = self.dialogs[prvdiag]
+
+    def check_integrity(self):
+        # check if all the choices are valid
+        for dialogid in self.dialogs:
+            for choiceid in self.dialogs[dialogid].choices:
+                if choiceid not in self.dialogs:
+                    return False
+        return True
+
+    def prune_dangling_choices(self):
+        # remove choices that point to a dialog that does not exist
+        choices_to_remove = []
+        for dialogid in self.dialogs:
+            for choiceid in self.dialogs[dialogid].choices:
+                if choiceid not in self.dialogs:
+                    choices_to_remove.append((dialogid, choiceid))
+        # Remove dangling choices outside the loop
+        for dialogid, choiceid in choices_to_remove:
+            self.dialogs[dialogid].choices.pop(choiceid)
+        return [c[1] for c in choices_to_remove]
+
+    def exec_logic(self):
+        if len(self.currentdialog.logic) > 1:
+            exec(self.currentdialog.logic)
 
     # class method that creates a story from a markdown string created with the to_Markdown method
     @classmethod
@@ -119,6 +155,7 @@ class Story:
         choicetext = ""
         nextdialogid = ""
         title = ""
+        logic = ""
         for line in lines:
             if line == "":
                 pass
@@ -130,11 +167,16 @@ class Story:
                     choices[nextdialogid] = Choice(choicetext, nextdialogid)
                 if dialogid != "":
                     # a new dialog is found, so the previous one is added to the dictionary
-                    dialogs[dialogid] = Dialog(dialogid, text, choices)
+                    if len(logic) > 0 and logic[-1] == "\n":
+                        logic = logic[:-1]
+                    dialogs[dialogid] = Dialog(dialogid, text, choices, logic)
                     text = ""
+                    logic = ""
                     choices = {}
                     nextdialogid = ""
                 dialogid = line[3:].strip()
+            elif line.startswith("LOGIC "):
+                logic += line[6:] + "\n"
             elif line.startswith("- "):
                 if nextdialogid != "":
                     # a new choice is found, so the previous one is added to the dictionary
@@ -149,8 +191,11 @@ class Story:
             else:
                 # then line is in the dialog section
                 text += line + "\n"
-        choices[nextdialogid] = Choice(choicetext, nextdialogid)
-        dialogs[dialogid] = Dialog(dialogid, text, choices)
+        if len(nextdialogid) > 0:
+            choices[nextdialogid] = Choice(choicetext, nextdialogid)
+        if len(logic) > 0 and logic[-1] == "\n":
+            logic = logic[:-1]
+        dialogs[dialogid] = Dialog(dialogid, text, choices, logic)
         return cls(dialogs, title=title)
 
     @classmethod
@@ -163,5 +208,5 @@ class Story:
         with open(fname, "r") as f:
             md = f.read()
             res = cls.from_markdown(md)
-            res.markdown_file = fname
+            res.markdown_file = str(fname)
             return res

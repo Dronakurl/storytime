@@ -23,14 +23,13 @@ poetry run textual run app.py
 
 
 ## TODO
-- State of the story in the story class
+- Copilot or other integration for story completion
 - Settings screen, with export, import of current story history
 - Settings dataclass: Storyfile, backup directory
-- Add choice option
 - Write the markdown file 
 - Backup the markdown file
 - Error correction in the story parser
-- Copilot or other integration for story completion
 - Some kind of healthpoint system
 - fights with monsters or something
+- Restrict exec function to only a few commands
 

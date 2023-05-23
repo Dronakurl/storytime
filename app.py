@@ -13,7 +13,6 @@ from textual.widgets import Footer, Header
 from textual.widgets import (
     DirectoryTree,
     Footer,
-    Label,
     ListItem,
     ListView,
     Markdown,
@@ -74,7 +73,7 @@ class StoryInterface(Screen):
         # yield Dialog()
         yield Container(
             Prompt(id="text"),
-            TextLog(highlight=True, markup=True),
+            TextLog(highlight=True, markup=True, wrap=True),
             Container(Choices(id="choices"), id="choicecontainer"),
             id="layout",
         )
@@ -84,14 +83,9 @@ class StoryInterface(Screen):
         pass
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
-        # text_log = self.query_one(TextLog)
-        # curchoices=self.story.currentdialog.choices
-        # selectchoice=curchoices.get(event.item.id[6:])
-        # text_log.write(f"Selected: {selectchoice}\n")
-        # if selectchoice is None:
-        #     raise ValueError("Choice not found")
         self.post_message(TextLogMessage(f"Selected: {event.item.id[6:]}"))
-        self.story.next_dialog(event.item.id[6:])
+        logmsg = self.story.next_dialog(event.item.id[6:])
+        self.post_message(TextLogMessage(f"Logic: {logmsg}"))
         self.display_currentdialog()
 
     def on_mount(self) -> None:
@@ -126,13 +120,18 @@ class StoryInterface(Screen):
         if not fname.is_file():
             raise FileNotFoundError
         self.story = Story.from_markdown_file(fname)
+        self.post_message(TextLogMessage(f"Loaded Title: {self.story.title} from {fname}"))
+        if not self.story.check_integrity():
+            errors = self.story.prune_dangling_choices()
+            self.post_message(TextLogMessage("Pruned dangling choices: \n" + "\n".join(errors)))
         self.display_currentdialog()
         self.set_focus(self.query_one("#choices"))
+        self.app.title = self.story.title
 
     def display_currentdialog(self):
         """Update reactive variables, so current dialog is displayed."""
         """ Update the text. """
-        text = self.story.currentdialog.text
+        text = "# " + self.story.currentdialog.dialogid + "\n\n" + self.story.currentdialog.text
         md = self.query_one("Prompt")
         md.prompt = text
         """ Update the choices. """
@@ -192,5 +191,10 @@ class Storytime(App):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        fname = Path(sys.argv[1])
+        if not fname.is_file():
+            print(f"File not found. Exiting. Given filename: {fname}")
+            sys.exit(1)
     app = Storytime()
     app.run()

@@ -6,8 +6,9 @@ authors = ["Dronakurl <konrad2710@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 textual = {extras = ["dev"], version = "^0.22.3"}
+openai = "^0.27.7"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"
