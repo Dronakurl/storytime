@@ -12,10 +12,11 @@ Label, Markdown {
     layout: grid;
     grid-size:3 2;
     width:100%;
+    margin-right:1;
 }
 
 #text {
-    column-span: 2;
+    column-span: 3;
     height:100%;
     background:$primary-background;
     color:white;
@@ -25,15 +26,96 @@ Label, Markdown {
 
 #choicecontainer {
     align-horizontal:center;
-    column-span: 2;
+    column-span: 3;
     padding:1;
     background:$surface;
     height: 100%;
 }
 
-TextLog {
+#log {
+    display: none;
     height:100%;
     row-span: 2;
+    padding:1;
+    background:$panel-lighten-3;
+    margin:1;
+}
+
+.container {
+    height: 70%;
+    width: 50%;
+    align: center top;
+    background:$surface;
+}
+
+.generatecontainer {
+    width: 80%;
+    height: 70%;
+    align: center top;
+    background:$surface;
+}
+
+#propertytable {
+    width: 100%;
+    /* background:$accent-darken-3; */
+    padding:1;
+    margin:1;
+}
+
+.titlelabel {
+    background:$accent;
+    padding:1;
+    margin:1;
+}
+
+#directorytree {
+    margin:1;
+    padding:1;
+}
+
+#generate {
+    margin:1;
+}
+
+#header {
+    background:$primary;
+    padding:0;
+    margin:1 1 0 1;
+    text-align: center;
+}
+
+#header Label {
+    padding:0;
+}
+
+#header > Horizontal {
+    height:1;
+}
+
+#headertitle {
+    width: 80%;
+    text-align: left;
+    padding-left:3;
+    margin-left:3;
+}
+
+#headerstats {
+    width: 20%;
+    /* background:$accent; */
+    /* text-align: right; */
+    margin-right:3;
+    padding-right:3;
+}
+
+#prompt {
+    /* height: 4; */
+    /* width: 90%; */
+    /* overflow-x: scroll; */
+    /* box-sizing: content-box; */
+}
+
+#gptout {
+    display: block;
     padding:1;
     background:$panel-lighten-3;
     margin:1;

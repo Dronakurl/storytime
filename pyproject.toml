@@ -42,10 +42,8 @@ addopts = [
     "-ra -q",
     "--disable-warnings",
     "--ignore=Archiv",
+    "--ignore=test/test_gptstory.py",
 ]
 pythonpath = ["."]
 # testpaths = [
-#     "spider/test",
-#     "imgclass/test",
-#     "utils/test",
 # ]

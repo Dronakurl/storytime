@@ -1,25 +1,20 @@
 from pathlib import Path
 import sys
-from typing import Iterable
+from typing import Iterable, ClassVar
+from threading import Thread
 
-from textual import events
-from textual.app import App, ComposeResult
-from textual.binding import Binding
-from textual.containers import Container
+from textual.app import App, ComposeResult, RenderableType
+from textual.binding import Binding, BindingType
+from textual.containers import Container, Vertical, Horizontal
+from textual.css.query import NoMatches
 from textual.message import Message
 from textual.reactive import reactive
-from textual.screen import Screen
-from textual.widgets import Footer, Header
-from textual.widgets import (
-    DirectoryTree,
-    Footer,
-    ListItem,
-    ListView,
-    Markdown,
-    TextLog,
-)
+from textual.screen import Screen, ModalScreen
+from textual.widgets import Footer, Header, DataTable
+from textual.widgets import DirectoryTree, Footer, ListItem, ListView, Markdown, TextLog, Label, Static, Input
 
 from story import Choice, Story
+from gptstory import StoryGenerator
 
 
 class TextLogMessage(Message):
@@ -58,29 +53,44 @@ class Choices(ListView):
             )
 
 
+class MyHeader(Static):
+    """A custom header."""
+
+    title = reactive("Storyteller")
+    stats = reactive("Stats")
+
+    def compose(self):
+        yield Horizontal(Label("Storyteller", id="headertitle"), Label("Stats", id="headerstats"))
+
+    def watch_title(self, title):
+        self.query_one("#headertitle").update(title)
+
+    def watch_stats(self, stats):
+        self.query_one("#headerstats").update(stats)
+
+
 class StoryInterface(Screen):
     BINDINGS = [
         ("q", "quit", "Quit"),
         Binding("c", "focus('choices')", "Choices", show=False),
-        ("s", "load_screen", "Settings"),
+        ("s", "load_screen", "Load Story"),
+        ("p", "properties_screen", "Properties"),
+        ("g", "generate_screen", "Generate"),
         ("h", "back", "Back"),
         ("t", "toggle_log", "Toggle Log"),
     ]
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
-        yield Header()
-        # yield Dialog()
+        # yield Header()
+        yield MyHeader(id="header")
         yield Container(
             Prompt(id="text"),
-            TextLog(highlight=True, markup=True, wrap=True),
+            TextLog(highlight=True, markup=True, wrap=True, id="log"),
             Container(Choices(id="choices"), id="choicecontainer"),
             id="layout",
         )
         yield Footer()
-
-    def on_key(self, event: events.Key) -> None:
-        pass
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         self.post_message(TextLogMessage(f"Selected: {event.item.id[6:]}"))
@@ -102,16 +112,23 @@ class StoryInterface(Screen):
 
     def action_load_screen(self):
         """Load the load screen."""
-        app.switch_screen("Load")
+        app.push_screen("Load")
+
+    def action_properties_screen(self):
+        """Load the properties screen."""
+        app.push_screen("Properties")
+
+    def action_generate_screen(self):
+        app.push_screen("Generate")
 
     def action_toggle_log(self):
         """Toggle the log."""
-        if self.query_one(TextLog).styles.display == "none":
+        if self.query_one("#log").styles.display == "none":
             self.query_one(TextLog).styles.display = "block"
             self.query_one("#text").styles.column_span = 2
             self.query_one("#choicecontainer").styles.column_span = 2
         else:
-            self.query_one(TextLog).styles.display = "none"
+            self.query_one("#log").styles.display = "none"
             self.query_one("#text").styles.column_span = 3
             self.query_one("#choicecontainer").styles.column_span = 3
 
@@ -120,13 +137,14 @@ class StoryInterface(Screen):
         if not fname.is_file():
             raise FileNotFoundError
         self.story = Story.from_markdown_file(fname)
-        self.post_message(TextLogMessage(f"Loaded Title: {self.story.title} from {fname}"))
+        self.post_message(TextLogMessage(f"Loaded Title: \n {self.story.title} from {fname}"))
         if not self.story.check_integrity():
             errors = self.story.prune_dangling_choices()
             self.post_message(TextLogMessage("Pruned dangling choices: \n" + "\n".join(errors)))
         self.display_currentdialog()
         self.set_focus(self.query_one("#choices"))
         self.app.title = self.story.title
+        self.query_one("#header").stats = f"{len(self.story.dialogs)} dialogues"
 
     def display_currentdialog(self):
         """Update reactive variables, so current dialog is displayed."""
@@ -139,6 +157,13 @@ class StoryInterface(Screen):
 
 
 class FilteredDirectoryTree(DirectoryTree):
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("enter", "select_cursor", "Select", show=False),
+        Binding("l", "toggle_node", "Toggle", show=False),
+        Binding("k", "cursor_up", "Cursor Up", show=False),
+        Binding("j", "cursor_down", "Cursor Down", show=False),
+    ]
+
     def filter_paths(self, paths: Iterable[Path]) -> Iterable[Path]:
         return [
             path
@@ -151,8 +176,8 @@ class FilteredDirectoryTree(DirectoryTree):
         ]
 
 
-class SettingsScreen(Screen):
-    BINDINGS = [
+class SettingsScreen(ModalScreen):
+    BINDINGS: ClassVar[list[BindingType]] = [
         ("q", "quit", "Quit"),
         ("c", "cancel", "Cancel"),
     ]
@@ -160,7 +185,11 @@ class SettingsScreen(Screen):
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
         yield Header()
-        yield FilteredDirectoryTree("./")
+        yield Vertical(
+            Label("Load story", classes="titlelabel"),
+            FilteredDirectoryTree("./", id="directorytree"),
+            classes="container",
+        )
         yield Footer()
 
     def action_cancel(self):
@@ -171,14 +200,103 @@ class SettingsScreen(Screen):
         self.set_focus(self.query_one("FilteredDirectoryTree"))
 
 
+class GenerateScreen(ModalScreen):
+    BINDINGS: ClassVar[list[BindingType]] = [
+        ("q", "quit", "Quit"),
+        ("c", "cancel", "Cancel"),
+    ]
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield Vertical(
+            Label("Create story", classes="titlelabel"),
+            Input("", id="prompt", placeholder="Enter a story idea and press ENTER"),
+            # TextLog(highlight=True, markup=True, wrap=True, id="gptout"),
+            Label("TEST", id="gptout"),
+            # Button("Generate", id="generate"),
+            classes="generatecontainer",
+        )
+        yield Footer()
+
+    def action_cancel(self):
+        """Return to the story screen."""
+        app.push_screen("Story")
+
+    def on_mount(self) -> None:
+        self.set_focus(self.query_one("Input"))
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        self.post_message(TextLogMessage(f"Input: {event.value}"))
+        self.counter_thread = Thread(target=self.upd_gptout, kwargs={"prompt": event.value})
+        self.counter_thread.start()
+        # app.push_screen("Story")
+
+    def upd_gptout(self, prompt: str = "Story output"):
+        sg = StoryGenerator(prompt=prompt)
+        for cur, chunk in sg.generate_story():
+            self.query_one("#gptout").update(cur)
+
+
+class PropertiesTable(DataTable):
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("enter", "select_cursor", "Select", show=False),
+        Binding("k", "cursor_up", "Cursor Up", show=False),
+        Binding("j", "cursor_down", "Cursor Down", show=False),
+        Binding("l", "cursor_right", "Cursor Right", show=False),
+        Binding("h", "cursor_left", "Cursor Left", show=False),
+    ]
+
+    def __init__(self, **kwargs):
+        super().__init__(fixed_rows=1, show_cursor=False, **kwargs)
+
+
+class PropertiesScreen(ModalScreen):
+    BINDINGS = [
+        ("q", "quit", "Quit"),
+        ("c", "cancel", "Cancel"),
+        Binding("p", "cancel", "Cancel", show=False),
+    ]
+
+    def compose(self) -> ComposeResult:
+        """Create child widgets for the app."""
+        yield Header()
+        yield Vertical(
+            Label("Properties", classes="titlelabel"),
+            PropertiesTable(id="propertytable"),
+            classes="container",
+        )
+        yield Footer()
+
+    def on_mount(self) -> None:
+        table = self.query_one("#propertytable")
+        table.add_columns("Property      ", "Value      ")
+        self.on_screen_resume()
+
+    def on_screen_resume(self) -> None:
+        table = self.query_one("#propertytable")
+        table.clear()
+        proptable = [(k, v) for k, v in app.SCREENS["Story"].story.properties.items()]
+        if len(proptable) == 0:
+            proptable = [("None", "None")]
+        self.post_message(TextLogMessage(f"Properties: {proptable}"))
+        table.add_rows(proptable)
+
+    def action_cancel(self):
+        """Return to the story screen."""
+        app.push_screen("Story")
+
+
 class Storytime(App):
-    SCREENS = {"Story": StoryInterface(), "Load": SettingsScreen()}
+    SCREENS = {
+        "Story": StoryInterface(id="storyscreen"),
+        "Load": SettingsScreen(),
+        "Properties": PropertiesScreen(),
+        "Generate": GenerateScreen(),
+    }
     CSS_PATH = "./assets/app.css"
 
     def on_mount(self) -> None:
         self.push_screen("Story")
-        self.push_screen("Load")
-        self.switch_screen("Story")
 
     # The app must handle events to pass them to other screens.
     def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected) -> None:
@@ -187,7 +305,15 @@ class Storytime(App):
 
     # The custom TextLogMessage event is handled here.
     def on_text_log_message(self, event: TextLogMessage):
-        self.query_one(TextLog).write(event.text)
+        log = self.SCREENS["Story"].query_one("#log", expect_type=TextLog)
+        log.wrap = True
+        log.write(event.text)
+
+    def watch_title(self, title):
+        try:
+            self.SCREENS["Story"].query_one("#header").title = title
+        except NoMatches:
+            pass
 
 
 if __name__ == "__main__":
