@@ -268,7 +268,7 @@ class GenerateScreen(ModalScreen):
 
     def upd_gptout(self, prompt: str = "Story output"):
         sg = StoryGenerator(prompt=prompt)
-        for cur, chunk in sg.generate_story():
+        for cur, _ in sg.generate_story():
             # for cur, chunk in sg.generate_story_from_file(fname="./data/chatgpttest.md"):
             self.query_one("#gptout").gptout = cur
 

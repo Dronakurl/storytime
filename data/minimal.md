@@ -1,30 +1,29 @@
-# Title of my Story
+# Harry in the woods
 
-## Starting dialogue
-Start the story with an initial dialogue
+## The beginning
+LOGIC PROPERTY "Health Points" = 100 
 
-- Heading of second dialogue: Description of option that leads to the next
+Harry is in the woods. He is lost. He is looking for a way out.
 
-- Title of another option: Description of other option
+- Turn to the castle: Go to the big castle
 
-## Heading of second dialogue
-LOGIC self.properties["some_property"] = "some_value"
+- Go left: Turn left on the path
 
-Some description of the second dialogue. 
+## Go left
+LOGIC PROPERTY "Health Points" = "Health Points" - 10
 
-- And so it begins ...: Description of option that leads back to the first
+Harry is attacked by a bear. He loses 10 health.
 
-- Title of another option: Description of option that leads to the next
+- Turn to the castle: Go to the big castle
 
-## Title of another option
-LOGIC if self.properties.get("some_property","") == "some_value":
-LOGIC    self.next_dialog("Conditional dialogue")
+## Turn to the castle
+LOGIC NEXTDIALOG "Injured" if self.properties.get("Health Points",100) < 100:
+LOGIC     self.next_dialog("Injured")
 
-Some description of this dialogue.
+Harry is not injured and arrives at the castle. He is greeted by a wizard.
 
-- Starting dialogue: Description of option that leads back
+## Injured
+LOGIC self.properties["Health Points"] = 100
 
-## Conditional dialogue
-This is the next dialogue if the property "some_property" is "some_value"
+Harry is injured. The wizard heals him.
 
-- Starting dialogue: Description of option that leads back

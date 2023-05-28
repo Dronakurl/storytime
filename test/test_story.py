@@ -1,70 +1,87 @@
-import json
 from story import Dialog, Choice, Story
 import pytest
 import os
 
 
 def test_choice():
-    data = {
-        "eins": {"text": "zweiter text", "nextdialogid": "eins"},
-        "zwei": {"text": "dritter text", "nextdialogid": "zwei"},
-    }
-    choices = Choice.dict_from_dict(data)
-    assert choices["eins"] == Choice.from_dict(json.loads(choices["eins"].toJson()))
+    choice = Choice("First line with Ü\nSecond line with #", "Next Dialogue ID")
+    assert choice.to_Markdown() == "- Next Dialogue ID: First line with Ü\nSecond line with #"
 
 
 def test_dialog():
-    data = {
-        "text": "erster text",
-        "choices": {
-            "eins": {"text": "zweiter text", "nextdialogid": "eins"},
-            "zwei": {"text": "dritter text", "nextdialogid": "zwei"},
+    dialog = Dialog(
+        "Coole IDß",
+        "Text in Unicode\n\n# Heading",
+        {
+            "eins": Choice("zweiter text", "eins"),
+            "zwei": Choice("dritter text", "zwei"),
         },
-    }
-    dialog = Dialog.from_dict("initial", data)
-    assert dialog == Dialog.from_dict("initial", json.loads(dialog.toJson()))
+        "PROPERTY test = 1",
+    )
+    assert (
+        dialog.to_Markdown()
+        == """## Coole IDß
+LOGIC PROPERTY test = 1
+
+Text in Unicode
+
+# Heading
+- eins: zweiter text
+
+- zwei: dritter text"""
+    )
 
 
-tstdict = {
-    "initial": {
-        "text": "erster text",
-        "choices": {
-            "eins": {"text": "zweiter text", "nextdialogid": "eins"},
-            "zwei": {"text": "dritter text", "nextdialogid": "zwei"},
+def get_test_story():
+    return Story(
+        {
+            "Coole IDß": Dialog(
+                "Coole IDß",
+                "Text in Unicode\n\n# Heading",
+                {
+                    "eins": Choice("zweiter text", "eins"),
+                    "zwei": Choice("dritter text", "zwei"),
+                },
+                "PROPERTY 'test' = 1"
+                + os.linesep
+                + "PROPERTY 'test2' = 'test' + 1"
+                + os.linesep
+                + "PROPERTY 'test3' = self.story.title:='adsd'",
+            ),
+            "eins": Dialog(
+                "eins",
+                "zweiter text",
+                {
+                    "drei": Choice("vierter text", "drei"),
+                },
+                "NEXTDIALOG 'zwei' IF 'test' == 1",
+            ),
+            "zwei": Dialog("zwei", "dritter text", {}),
         },
-    },
-    "eins": {
-        "text": "vierter text",
-        "choices": {"zwei": {"text": "fünfter text", "nextdialogid": "zwei"}},
-    },
-    "zwei": {
-        "text": "sechster text",
-        "choices": {"eins": {"text": "siebter text", "nextdialogid": "eins"}},
-    },
-}
-
-
-def test_story():
-    story = Story.from_dict(tstdict)
-    astor = Story.from_dict(json.loads(story.toJson())["dialogs"])
-    assert story == astor
+        "My Story",
+    )
 
 
 def test_next_dialog():
-    story = Story.from_dict(tstdict)
+    story = get_test_story()
     story.next_dialog("eins")
     assert story.currentdialog == story.dialogs["eins"]
-    story.next_dialog("zwei")
-    assert story.currentdialog == story.dialogs["zwei"]
 
 
-def test_to_Markdown():
-    story = Story.from_dict(tstdict)
-    print(story.to_Markdown())
+def test_property_logic():
+    story = get_test_story()
+    assert story.properties["test"] == 1
+    assert story.properties["test2"] == 2
+
+
+def test_next_dialog_logic():
+    story = get_test_story()
+    story.next_dialog("eins")
+    assert list(story.currentdialog.choices.keys())[0] == "zwei"
 
 
 def test_back_dialog():
-    story = Story.from_dict(tstdict)
+    story = get_test_story()
     story.next_dialog("eins")
     story.next_dialog("zwei")
     assert len(story.prevdialogids) == 3
@@ -72,25 +89,17 @@ def test_back_dialog():
     assert len(story.prevdialogids) == 2
     assert story.currentdialog == story.dialogs["eins"]
     story.back_dialog()
-    assert story.currentdialog == story.dialogs["initial"]
+    assert story.currentdialog == story.dialogs["Coole IDß"]
     story.back_dialog()
-    assert story.currentdialog == story.dialogs["initial"]
-
-
-def test_from_markdown():
-    story = Story.from_dict(tstdict)
-    markdown = story.to_Markdown()
-    print(markdown)
-    storycmp = Story.from_markdown(markdown)
-    print(storycmp)
+    assert story.currentdialog == story.dialogs["Coole IDß"]
 
 
 @pytest.mark.parametrize(
     "file",
     [
         "./data/story.md",
-        "./data/story_with_properties.md",
-        "./data/minimal2.md",
+        "./data/minimal.md",
+        "./data/broken.md",
     ],
 )
 def test_from_markdown_file(file):
@@ -118,6 +127,3 @@ def test_integrity():
     assert not story.check_integrity()
     story.prune_dangling_choices()
     assert story.check_integrity()
-
-
-test_from_markdown_file("./data/minimal2.md")

@@ -1,4 +1,8 @@
-import json
+"""
+This module contains the classes that represent a story.
+A Story is a collection of Dialogs.
+A Dialog contains a selection of Choices.
+"""
 from pathlib import Path
 import re
 
@@ -11,22 +15,11 @@ class Choice:
     def __repr__(self):
         return f"Choice({self.text}, {self.nextdialogid})"
 
-    @classmethod
-    def from_dict(cls, data: dict):
-        return cls(data["text"], data["nextdialogid"])
-
-    @classmethod
-    def dict_from_dict(cls, data: dict):
-        return {x: cls.from_dict(data[x]) for x in data}
-
-    def toJson(self):
-        return json.dumps(self, default=lambda o: o.__dict__, indent=4)
-
     def to_Markdown(self):
         return f"- {self.nextdialogid}: {self.text}"
 
     def __eq__(self, other):
-        return self.toJson() == other.toJson()
+        return self.to_Markdown() == other.to_Markdown()
 
 
 class Dialog:
@@ -43,13 +36,6 @@ class Dialog:
     def __repr__(self):
         return f"Dialog({self.dialogid}, {self.text}, {self.choices})"
 
-    @classmethod
-    def from_dict(cls, dialogid: str, data: dict):
-        return cls(dialogid, data["text"], Choice.dict_from_dict(data["choices"]))
-
-    def toJson(self):
-        return json.dumps(self, default=lambda o: o.__dict__, indent=4)
-
     def choices_to_Markdown(self):
         return "\n\n".join([self.choices[x].to_Markdown() for x in self.choices])
 
@@ -63,27 +49,18 @@ class Dialog:
         return f"## {self.dialogid}\n{self.write_logic()}{self.text}\n{self.choices_to_Markdown()}"
 
     def __eq__(self, other):
-        return self.toJson() == other.toJson()
+        return self.to_Markdown() == other.to_Markdown()
 
 
 class Story:
-    def __init__(self, dialogs: dict[str, Dialog], title: str = "Story", state: dict = {}):
+    def __init__(self, dialogs: dict[str, Dialog], title: str = "Story"):
         self.dialogs = dialogs
         self.currentdialog = self.dialogs[list(dialogs.keys())[0]]
         self.prevdialogids = [list(dialogs.keys())[0]]
         self.title = title
-        self.state = state
         self.markdown_file = "story.md"
         self.properties = {}
         self.exec_logic()
-
-    @classmethod
-    def from_dict(cls, data: dict, title: str = "Story"):
-        x = {x: Dialog.from_dict(x, data[x]) for x in data}
-        return cls(x, title=title)
-
-    def toJson(self):
-        return json.dumps(self, default=lambda o: o.__dict__, indent=4)
 
     def to_Markdown(self):
         res = f"# {self.title}\n\n"
@@ -92,12 +69,14 @@ class Story:
         return res
 
     def __repr__(self):
-        return self.toJson()
+        return self.to_Markdown()
 
     def __eq__(self, other):
-        return self.toJson() == other.toJson()
+        return self.to_Markdown() == other.to_Markdown()
 
-    def save_markdown(self):
+    def save_markdown(self, fname: str = None):
+        if fname is not None:
+            self.markdown_file = fname
         with open(Path(self.markdown_file), "w") as f:
             f.write(self.to_Markdown())
 
@@ -139,11 +118,43 @@ class Story:
             self.dialogs[dialogid].choices.pop(choiceid)
         return [c[1] for c in choices_to_remove]
 
-    def exec_logic(self):
-        if len(self.currentdialog.logic) > 1:
+    def exec_logic_old(self):
+        if len(self.currentdialog.logic) <= 1:
+            return
+        try:
             exec(self.currentdialog.logic)
+        except Exception as e:
+            print(f"Error {e} in logic {self.currentdialog.logic}")
 
-    # class method that creates a story from a markdown string created with the to_Markdown method
+    def exec_logic(self):
+        if len(self.currentdialog.logic) <= 1:
+            return
+        # loop over lines of logic
+        for strl in self.currentdialog.logic.split("\n"):
+            # # string code that sets the properties
+            # strl = "PROPERTY 'Property Key' = 'Property Value'"
+            # # string code that changes the current dialog based on the properties
+            # strl = "NEXTDIALOG 'Dialog ID' IF 'Property Key' == 'Property Value'"
+            if strl.startswith("PROPERTY"):
+                x = re.search(r"PROPERTY [\"\'](.*)[\"\'] = (.*)", strl)
+                try:
+                    res = x.group(2)
+                    for key in self.properties:
+                        res = re.sub(f"[\"']{key}[\"']", f"properties['{key}']", res)
+                    self.properties[x.group(1)] = eval(res, {"__builtins__": None}, {"properties": self.properties})
+                except Exception as e:
+                    print(f"Error {e} in logic {strl}")
+            elif strl.startswith("NEXTDIALOG"):
+                x = re.search(r"NEXTDIALOG [\"\'](.*)[\"\'] IF (.*)", strl)
+                try:
+                    cond = x.group(2)
+                    for key in self.properties:
+                        cond = re.sub(f"[\"']{key}[\"']", f"properties['{key}']", cond)
+                    if eval(cond, {"__builtins__": None}, {"properties": self.properties}):
+                        self.currentdialog.choices = {x.group(1): Choice("Continue", x.group(1))}
+                except Exception as e:
+                    print(f"Error {e} in logic {strl}")
+
     @classmethod
     def from_markdown(cls, markdown: str):
         # Parse a string with markdown and return an Story object
