@@ -1,4 +1,5 @@
 import os
+import time
 
 import openai
 
@@ -69,6 +70,20 @@ class StoryGenerator:
                 self.delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content")
                 if self.delta is None:
                     self.delta = ""
+                self.current_result += self.delta
+                yield self.current_result, self.delta
+
+    def generate_story_from_file(self, fname: str = "data/story.md"):
+        """Generate a story from a file.
+
+        :param fname: The name of the file to read from.
+        :returns: a generator that yields the state of the current story and the delta that was just added
+        """
+        self.current_result = ""
+        with open(fname, "r") as f:
+            for line in f:
+                time.sleep(0.1)
+                self.delta = line
                 self.current_result += self.delta
                 yield self.current_result, self.delta
 

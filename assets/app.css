@@ -50,7 +50,7 @@ Label, Markdown {
 
 .generatecontainer {
     width: 80%;
-    height: 70%;
+    height: 90%;
     align: center top;
     background:$surface;
 }
@@ -118,6 +118,51 @@ Label, Markdown {
     display: block;
     padding:1;
     background:$panel-lighten-3;
+    /* height:;     */
     margin:1;
+    overflow-y: scroll;
 }
+
+.buttoncontainer {
+    height: 3;
+    margin:0;
+    margin-top:1;
+}
+
+.buttoncontainer > Button {
+    margin:0 1 0 1;
+}
+
+.buttoncontainer > Input {
+    margin:0 1 0 1;
+    width: 30;
+}
+
+.savecontainer {
+    width: 50%;
+    height: 15;
+    align: center top;
+    background:$surface;
+}
+
+.savecontainer Button {
+    margin:1;
+    margin-top:0;
+}
+
+.savecontainer > Input {
+    margin:1;
+    margin-top:0;
+}
+
+#savebuttons {
+    margin:0;
+}
+
+#savefeedback {
+    margin:0;
+    padding:1;
+    width: auto;
+}
+
 

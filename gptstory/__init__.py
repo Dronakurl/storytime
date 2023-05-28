@@ -1,2 +1,1 @@
-from .gptstory import StoryGenerator
-from .gptstory import gptstory
+from .gptstory import StoryGenerator, gptstory, apikey

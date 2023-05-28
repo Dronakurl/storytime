@@ -3,7 +3,7 @@ import sys
 from typing import Iterable, ClassVar
 from threading import Thread
 
-from textual.app import App, ComposeResult, RenderableType
+from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingType
 from textual.containers import Container, Vertical, Horizontal
 from textual.css.query import NoMatches
@@ -11,7 +11,18 @@ from textual.message import Message
 from textual.reactive import reactive
 from textual.screen import Screen, ModalScreen
 from textual.widgets import Footer, Header, DataTable
-from textual.widgets import DirectoryTree, Footer, ListItem, ListView, Markdown, TextLog, Label, Static, Input
+from textual.widgets import (
+    DirectoryTree,
+    Footer,
+    ListItem,
+    ListView,
+    Markdown,
+    TextLog,
+    Label,
+    Static,
+    Input,
+    Button,
+)
 
 from story import Choice, Story
 from gptstory import StoryGenerator, gptstory
@@ -73,10 +84,18 @@ class StoryInterface(Screen):
     BINDINGS = [
         ("q", "quit", "Quit"),
         Binding("c", "focus('choices')", "Choices", show=False),
-        ("s", "load_screen", "Load Story"),
+        ("o", "load_screen", "Load Story"),
+        ("s", "save_screen", "Save Story"),
         ("p", "properties_screen", "Properties"),
         *([("g", "generate_screen", "Generate")] if gptstory else []),
-        *([("h", "back", "Back"), ("t", "toggle_log", "Toggle Log"),] if not __debug__ else []),
+        *(
+            [
+                ("h", "back", "Back"),
+                ("t", "toggle_log", "Toggle Log"),
+            ]
+            if not False
+            else []
+        ),
     ]
 
     def compose(self) -> ComposeResult:
@@ -110,18 +129,18 @@ class StoryInterface(Screen):
         self.display_currentdialog()
 
     def action_load_screen(self):
-        """Load the load screen."""
         app.push_screen("Load")
 
+    def action_save_screen(self):
+        app.push_screen("Save")
+
     def action_properties_screen(self):
-        """Load the properties screen."""
         app.push_screen("Properties")
 
     def action_generate_screen(self):
         app.push_screen("Generate")
 
     def action_toggle_log(self):
-        """Toggle the log."""
         if self.query_one("#log").styles.display == "none":
             self.query_one(TextLog).styles.display = "block"
             self.query_one("#text").styles.column_span = 2
@@ -199,10 +218,22 @@ class SettingsScreen(ModalScreen):
         self.set_focus(self.query_one("FilteredDirectoryTree"))
 
 
+class GenerateOut(TextLog):
+    gptout = reactive("Output will appear here")
+
+    def watch_gptout(self, gptout):
+        self.clear()
+        self.write(gptout)
+
+    def __init__(self, **kwargs):
+        super().__init__(wrap=True, markup=True, **kwargs)
+
+
 class GenerateScreen(ModalScreen):
     BINDINGS: ClassVar[list[BindingType]] = [
         ("q", "quit", "Quit"),
         ("c", "cancel", "Cancel"),
+        ("s", "save", "Save story"),
     ]
 
     def compose(self) -> ComposeResult:
@@ -210,30 +241,91 @@ class GenerateScreen(ModalScreen):
         yield Vertical(
             Label("Create story", classes="titlelabel"),
             Input("", id="prompt", placeholder="Enter a story idea and press ENTER"),
-            # TextLog(highlight=True, markup=True, wrap=True, id="gptout"),
-            Label("TEST", id="gptout"),
-            # Button("Generate", id="generate"),
+            Horizontal(
+                Button("Play the story", id="usestory"),
+                Button("Go back", id="cancel"),
+                classes="buttoncontainer",
+            ),
+            GenerateOut(id="gptout"),
             classes="generatecontainer",
         )
         yield Footer()
 
     def action_cancel(self):
-        """Return to the story screen."""
         app.push_screen("Story")
 
+    def action_save(self):
+        app.push_screen("Save")
+
     def on_mount(self) -> None:
-        self.set_focus(self.query_one("Input"))
+        self.set_focus(self.query_one("#prompt"))
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         self.post_message(TextLogMessage(f"Input: {event.value}"))
         self.counter_thread = Thread(target=self.upd_gptout, kwargs={"prompt": event.value})
         self.counter_thread.start()
-        # app.push_screen("Story")
+        # self.upd_gptout(prompt=event.value)
 
     def upd_gptout(self, prompt: str = "Story output"):
         sg = StoryGenerator(prompt=prompt)
         for cur, chunk in sg.generate_story():
-            self.query_one("#gptout").update(cur)
+            # for cur, chunk in sg.generate_story_from_file(fname="./data/chatgpttest.md"):
+            self.query_one("#gptout").gptout = cur
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.post_message(TextLogMessage(f"Button pressed: {event.button.id}"))
+        if event.button.id == "cancel":
+            self.action_cancel()
+        elif event.button.id == "usestory":
+            self.post_message(TextLogMessage(f"Using story"))
+            st = Story.from_markdown(self.query_one("#gptout").gptout)
+            st.markdown_file = Path("/tmp/story.md")
+            st.save_markdown()
+            app.SCREENS["Story"].load_story(st.markdown_file)
+            app.push_screen("Story")
+
+
+class SaveScreen(ModalScreen):
+    BINDINGS = [
+        ("q", "quit", "Quit"),
+        ("c", "cancel", "Cancel"),
+        Binding("s", "cancel", "Cancel", show=False),
+    ]
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield Vertical(
+            Label("Save current story to file", classes="titlelabel"),
+            Input("", id="savename", placeholder="Enter a filename"),
+            Horizontal(
+                Button("Save story to file", id="savestory"),
+                Label("", id="savefeedback"),
+                id="savebuttons",
+            ),
+            classes="savecontainer",
+        )
+        yield Footer()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.post_message(TextLogMessage(f"Button pressed: {event.button.id}"))
+        if event.button.id == "savestory":
+            fname = self.query_one("#savename").value
+            if fname == "":
+                self.post_message(TextLogMessage(f"Please enter a filename"))
+                return
+            st = app.SCREENS["Story"].story
+            st.markdown_file = Path(fname)
+            st.save_markdown()
+            self.post_message(TextLogMessage(f"Saved to {fname}"))
+            self.query_one("#savefeedback").update(f"Saved to {fname}")
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id == "savename":
+            return
+
+    def action_cancel(self):
+        """Return to the story screen."""
+        app.push_screen("Story")
 
 
 class PropertiesTable(DataTable):
@@ -289,6 +381,7 @@ class Storytime(App):
     SCREENS = {
         "Story": StoryInterface(id="storyscreen"),
         "Load": SettingsScreen(),
+        "Save": SaveScreen(),
         "Properties": PropertiesScreen(),
         "Generate": GenerateScreen(),
     }
@@ -316,6 +409,14 @@ class Storytime(App):
 
 
 if __name__ == "__main__":
+    # if not __debug__:
+    #     print("WARNING: Running in debug mode with back button and log")
+    #     print("Start without -O to disable debug mode")
+    #     input("Press enter to continue")
+    if not gptstory:
+        print("WARNING: GPT-Story not found. Running without GPT-Story")
+        print("Set environment variable OPENAI_API_KEY to enable GPT-Story (in .env file)")
+        input("Press enter to continue")
     if len(sys.argv) > 1:
         fname = Path(sys.argv[1])
         if not fname.is_file():
