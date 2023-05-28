@@ -64,8 +64,8 @@ def get_test_story():
 
 def test_next_dialog():
     story = get_test_story()
-    story.next_dialog("eins")
-    assert story.currentdialog == story.dialogs["eins"]
+    story.next_dialog("zwei")
+    assert story.currentdialog == story.dialogs["zwei"]
 
 
 def test_property_logic():
@@ -77,11 +77,13 @@ def test_property_logic():
 def test_next_dialog_logic():
     story = get_test_story()
     story.next_dialog("eins")
-    assert list(story.currentdialog.choices.keys())[0] == "zwei"
+    # assert list(story.currentdialog.choices.keys())[0] == "zwei"
+    assert story.currentdialog == story.dialogs["zwei"]
 
 
 def test_back_dialog():
     story = get_test_story()
+    story.properties["test"] = 2
     story.next_dialog("eins")
     story.next_dialog("zwei")
     assert len(story.prevdialogids) == 3
@@ -92,6 +94,15 @@ def test_back_dialog():
     assert story.currentdialog == story.dialogs["Coole IDß"]
     story.back_dialog()
     assert story.currentdialog == story.dialogs["Coole IDß"]
+
+
+def test_property_logic_minimal():
+    story = Story.from_markdown_file("./data/minimal.md")
+    assert story.properties["Health Points"] == 100
+    story.next_dialog("Go left")
+    assert story.properties["Health Points"] == 90
+    story.next_dialog("Turn to the castle")
+    assert story.currentdialog == story.dialogs["Injured"]
 
 
 @pytest.mark.parametrize(
@@ -110,7 +121,6 @@ def test_from_markdown_file(file):
     sm = story.to_Markdown()
     sm = os.linesep.join([s for s in sm.splitlines() if s])
     assert md == sm
-    print(story.to_Markdown())
 
 
 def test_addchoice():

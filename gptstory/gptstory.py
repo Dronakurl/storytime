@@ -16,7 +16,7 @@ openai.api_key = apikey
 class StoryGenerator:
     """Generate a story from a prompt."""
 
-    with open("data/minimal2.md", "r") as f:
+    with open("data/minimal.md", "r") as f:
         storytemplate = f.read()
 
     def __init__(
