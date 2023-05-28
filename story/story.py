@@ -150,8 +150,10 @@ class Story:
                     cond = x.group(2)
                     for key in self.properties:
                         cond = re.sub(f"[\"']{key}[\"']", f"properties['{key}']", cond)
+                        print(cond)
                     if eval(cond, {"__builtins__": None}, {"properties": self.properties}):
-                        self.currentdialog.choices = {x.group(1): Choice("Continue", x.group(1))}
+                        # self.currentdialog.choices = {x.group(1): Choice("Continue", x.group(1))}
+                        self.next_dialog(x.group(1))
                 except Exception as e:
                     print(f"Error {e} in logic {strl}")
 
