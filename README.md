@@ -25,6 +25,11 @@ poetry run textual run app.py
 ## Integration with openai
 To use the openai integration, you need to set the environment variable `OPENAI_API_KEY` to your openai api key.
 You can get your api key from the [openai settings](https://platform.openai.com/account/api-keys).
+The `OPENAI_API_KEY` can be set in the `.env` file in the root directory of this project.
+You will also nedd the poetry package `python-dotenv`:
+``` 
+poetry add python-dotenv
+```
 
 ```[tasklist]
 ### Todos

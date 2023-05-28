@@ -6,7 +6,7 @@ authors = ["Dronakurl <konrad2710@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.10"
 textual = {extras = ["dev"], version = "^0.22.3"}
 openai = "^0.27.7"
 
@@ -32,7 +32,7 @@ typeCheckingMode = "off"
 reportGeneralTypeIssues = false
 reportMissingTypeStubs = false
 useLibraryCodeForTypes = false
-pythonVersion = "3.11"
+pythonVersion = "^3.10"
 pythonPlatform = "Linux"
 
 [tool.pytest.ini_options]

@@ -4,10 +4,11 @@ import openai
 
 from story import Story
 
+gptstory = True
 apikey = os.getenv("OPENAI_API_KEY")
 if apikey is None:
     print("OPENAI_API_KEY not set")
-    raise EnvironmentError("OPENAI_API_KEY not set")
+    gptstory = False
 openai.api_key = apikey
 
 

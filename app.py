@@ -14,7 +14,7 @@ from textual.widgets import Footer, Header, DataTable
 from textual.widgets import DirectoryTree, Footer, ListItem, ListView, Markdown, TextLog, Label, Static, Input
 
 from story import Choice, Story
-from gptstory import StoryGenerator
+from gptstory import StoryGenerator, gptstory
 
 
 class TextLogMessage(Message):
@@ -75,9 +75,8 @@ class StoryInterface(Screen):
         Binding("c", "focus('choices')", "Choices", show=False),
         ("s", "load_screen", "Load Story"),
         ("p", "properties_screen", "Properties"),
-        ("g", "generate_screen", "Generate"),
-        ("h", "back", "Back"),
-        ("t", "toggle_log", "Toggle Log"),
+        *([("g", "generate_screen", "Generate")] if gptstory else []),
+        *([("h", "back", "Back"), ("t", "toggle_log", "Toggle Log"),] if not __debug__ else []),
     ]
 
     def compose(self) -> ComposeResult:
