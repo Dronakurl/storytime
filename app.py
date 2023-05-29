@@ -1,8 +1,8 @@
 from pathlib import Path
 import sys
 from typing import Iterable, ClassVar
-from threading import Thread
 
+from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingType
 from textual.containers import Container, Vertical, Horizontal
@@ -260,16 +260,15 @@ class GenerateScreen(ModalScreen):
     def on_mount(self) -> None:
         self.set_focus(self.query_one("#prompt"))
 
-    def on_input_submitted(self, event: Input.Submitted) -> None:
+    async def on_input_submitted(self, event: Input.Submitted) -> None:
         self.post_message(TextLogMessage(f"Input: {event.value}"))
-        self.counter_thread = Thread(target=self.upd_gptout, kwargs={"prompt": event.value})
-        self.counter_thread.start()
-        # self.upd_gptout(prompt=event.value)
+        self.upd_gptout(prompt=event.value)
 
-    def upd_gptout(self, prompt: str = "Story output"):
+    @work
+    async def upd_gptout(self, prompt: str = "A story about a pirate") -> None:
         sg = StoryGenerator(prompt=prompt)
-        for cur, _ in sg.generate_story():
-            # for cur, chunk in sg.generate_story_from_file(fname="./data/chatgpttest.md"):
+        async for cur, _ in sg.generate_story():
+            # async for cur, _ in sg.generate_story_from_file(fname="./data/minimal.md"):
             self.query_one("#gptout").gptout = cur
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

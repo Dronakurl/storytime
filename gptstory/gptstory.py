@@ -1,5 +1,5 @@
 import os
-import time
+import asyncio
 
 import openai
 
@@ -22,16 +22,13 @@ class StoryGenerator:
     def __init__(
         self,
         prompt: str = "The story is about a pirate",
-        stream: bool = True,
     ):
         """Initialize the story generator.
 
         :param prompt: The prompt to use to generate the story. It should be a brief description of the story.
-        :param stream: Whether to stream the results or not.
         :returns: None
         """
         self.prompt = prompt
-        self.stream = stream
         self.generateprompt = (
             "Write a story for a text based role playing program, that has this example syntax. Return as markup code that can be copied into a text editor. \n\n ```\n "
             + self.storytemplate
@@ -41,14 +38,14 @@ class StoryGenerator:
         self.current_result = ""
         self.delta = ""
 
-    def generate_story(self, **kwargs):
+    async def generate_story(self, **kwargs):
         """Generate a story from a prompt.
 
         :param kwargs: Keyword arguments to pass to chatgpt
         :returns: a generator that yields the state of the current story and the delta that was just added
                 when stream is True, otherwise returns the full story
         """
-        completion = openai.ChatCompletion.create(
+        completion = openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo",
             # model="text-ada-001",
             messages=[
@@ -60,20 +57,17 @@ class StoryGenerator:
                 },
                 {"role": "user", "content": self.prompt},
             ],
-            stream=self.stream,
+            stream=True,
             **kwargs,
         )
-        if not self.stream:
-            return completion.choices[0].message.content
-        else:
-            for chunk in completion:
-                self.delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content")
-                if self.delta is None:
-                    self.delta = ""
-                self.current_result += self.delta
-                yield self.current_result, self.delta
+        async for chunk in await completion:
+            self.delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content")
+            if self.delta is None:
+                self.delta = ""
+            self.current_result += self.delta
+            yield self.current_result, self.delta
 
-    def generate_story_from_file(self, fname: str = "data/story.md"):
+    async def generate_story_from_file(self, fname: str = "data/story.md"):
         """Generate a story from a file.
 
         :param fname: The name of the file to read from.
@@ -82,7 +76,7 @@ class StoryGenerator:
         self.current_result = ""
         with open(fname, "r") as f:
             for line in f:
-                time.sleep(0.1)
+                await asyncio.sleep(0.1)
                 self.delta = line
                 self.current_result += self.delta
                 yield self.current_result, self.delta
