@@ -1,31 +1,32 @@
 from pathlib import Path
 import sys
-from typing import Iterable, ClassVar
+from typing import ClassVar, Iterable
 
 from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingType
-from textual.containers import Container, Vertical, Horizontal
+from textual.containers import Container, Horizontal, Vertical
 from textual.css.query import NoMatches
 from textual.message import Message
 from textual.reactive import reactive
-from textual.screen import Screen, ModalScreen
-from textual.widgets import Footer, Header, DataTable
+from textual.screen import ModalScreen, Screen
+from textual.widgets import DataTable, Footer, Header
 from textual.widgets import (
+    Button,
     DirectoryTree,
     Footer,
+    Input,
+    Label,
     ListItem,
     ListView,
     Markdown,
-    TextLog,
-    Label,
     Static,
-    Input,
-    Button,
+    TextLog,
 )
+from textual.worker import WorkerState
 
-from story import Choice, Story
 from gptstory import StoryGenerator, gptstory
+from story import Choice, Story
 
 
 class TextLogMessage(Message):
@@ -242,8 +243,8 @@ class GenerateScreen(ModalScreen):
             Label("Create story", classes="titlelabel"),
             Input("", id="prompt", placeholder="Enter a story idea and press ENTER"),
             Horizontal(
+                Button("Cancel generation", id="cancel"),
                 Button("Play the story", id="usestory"),
-                Button("Go back", id="cancel"),
                 classes="buttoncontainer",
             ),
             GenerateOut(id="gptout"),
@@ -252,7 +253,11 @@ class GenerateScreen(ModalScreen):
         yield Footer()
 
     def action_cancel(self):
-        app.push_screen("Story")
+        # Cancel the story generation
+        for w in app.workers:
+            if w.name == "upd_gptout" and w.state == WorkerState.RUNNING:
+                w.cancel()
+        # app.push_screen("Story")
 
     def action_save(self):
         app.push_screen("Save")
@@ -261,14 +266,18 @@ class GenerateScreen(ModalScreen):
         self.set_focus(self.query_one("#prompt"))
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
+        # Avoid that the story generation is just restarted every time the user presses enter
+        for w in app.workers:
+            if w.name == "upd_gptout" and w.state == WorkerState.RUNNING:
+                return
         self.post_message(TextLogMessage(f"Input: {event.value}"))
         self.upd_gptout(prompt=event.value)
 
-    @work
+    @work(exclusive=True)
     async def upd_gptout(self, prompt: str = "A story about a pirate") -> None:
         sg = StoryGenerator(prompt=prompt)
-        async for cur, _ in sg.generate_story():
-            # async for cur, _ in sg.generate_story_from_file(fname="./data/minimal.md"):
+        # async for cur, _ in sg.generate_story():
+        async for cur, _ in sg.generate_story_from_file(fname="./data/minimal.md"):
             self.query_one("#gptout").gptout = cur
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -324,7 +333,7 @@ class SaveScreen(ModalScreen):
 
     def action_cancel(self):
         """Return to the story screen."""
-        app.push_screen("Story")
+        app.pop_screen()
 
 
 class PropertiesTable(DataTable):
