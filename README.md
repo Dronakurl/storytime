@@ -1,8 +1,9 @@
 # Storytime
-## View and create interactive stories in your terminal (web version planned)
+## View/ create interactive stories in terminal 
+### (web version planned)
 With storytime, you can create fun interactive stories in your terminal. 
 Just write a markdown file with your dialogues, choices and simple logic. 
-An example file can be found in [`data/story.md`](data/story.md).
+An example file can be found in [`data/minimal.md`](data/minimal.md).
 You can also create a story with the built-in [openai](https://openai.com) integration.
 
 ## Installation
@@ -16,7 +17,7 @@ If you don't like `poetry`, you can install with `pip`:
 pip install -r requirements.txt 
 ```
 
-## Start the storytime terminal app
+## Start the Storytime terminal app
 Run Storytime with (or without the `poetry run` part, if you installed with `pip`):
 ```
 poetry run textual run app.py
