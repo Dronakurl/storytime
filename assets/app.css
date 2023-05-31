@@ -1,168 +1,181 @@
 Screen {
-    align: center middle;
+  align: center middle;
 }
 
-Label, Markdown {
-    width: 100%;
-    padding:1;
-    padding-bottom:-1;
+#choicecontainer Label, #choicecontainer Markdown {
+  width: 100%;
+  padding: 1;
+  padding-bottom: -1;
 }
 
 #layout {
-    layout: grid;
-    grid-size:3 2;
-    width:100%;
-    margin-right:1;
+  layout: grid;
+  grid-size: 3 2;
+  width: 100%;
+  margin-right: 1;
 }
 
 #text {
-    column-span: 3;
-    height:100%;
-    background:$primary-background;
-    color:white;
-    margin:1;
-    padding:1;
+  column-span: 3;
+  height: 100%;
+  background: $primary-background;
+  color: white;
+  margin: 1;
+  padding: 1;
 }
 
 #choicecontainer {
-    align-horizontal:center;
-    column-span: 3;
-    padding:1;
-    background:$surface;
-    height: 100%;
+  align-horizontal: center;
+  column-span: 3;
+  padding: 1;
+  background: $surface;
+  height: 100%;
 }
 
 #log {
-    display: none;
-    height:100%;
-    row-span: 2;
-    padding:1;
-    background:$panel-lighten-3;
-    margin:1;
+  display: none;
+  height: 100%;
+  row-span: 2;
+  padding: 1;
+  background: $panel-lighten-3;
+  margin: 1;
 }
 
 .container {
-    height: 70%;
-    width: 50%;
-    align: center top;
-    background:$surface;
+  height: 70%;
+  width: 50%;
+  align: center top;
+  background: $surface;
 }
 
 .generatecontainer {
-    width: 80%;
-    height: 90%;
-    align: center top;
-    background:$surface;
+  width: 80%;
+  height: 90%;
+  align: center top;
+  background: $surface;
 }
 
 #propertytable {
-    width: 100%;
-    /* background:$accent-darken-3; */
-    padding:1;
-    margin:1;
+  width: 100%;
+  /* background:$accent-darken-3; */
+  padding: 1;
+  margin: 1;
 }
 
 .titlelabel {
-    background:$accent;
-    padding:1;
-    margin:1;
+  background: $accent;
+  width: 100%;
+  padding: 1;
+  margin: 1;
 }
 
 #directorytree {
-    margin:1;
-    padding:1;
+  margin: 1;
+  padding: 1;
 }
 
 #generate {
-    margin:1;
+  margin: 1;
 }
 
 #header {
-    background:$primary;
-    padding:0;
-    margin:1 1 0 1;
-    text-align: center;
+  background: $primary;
+  padding: 0;
+  margin: 1 1 0 1;
+  text-align: center;
 }
 
 #header Label {
-    padding:0;
+  padding: 0;
 }
 
 #header > Horizontal {
-    height:1;
+  height: 1;
 }
 
 #headertitle {
-    width: 80%;
-    text-align: left;
-    padding-left:3;
-    margin-left:3;
+  width: 80%;
+  text-align: left;
+  padding-left: 3;
+  margin-left: 3;
 }
 
 #headerstats {
-    width: 20%;
-    /* background:$accent; */
-    /* text-align: right; */
-    margin-right:3;
-    padding-right:3;
-}
-
-#prompt {
-    /* height: 4; */
-    /* width: 90%; */
-    /* overflow-x: scroll; */
-    /* box-sizing: content-box; */
+  width: 20%;
+  margin-right: 3;
+  padding-right: 3;
 }
 
 #gptout {
-    display: block;
-    padding:1;
-    background:$panel-lighten-3;
-    /* height:;     */
-    margin:1;
-    overflow-y: scroll;
+  display: block;
+  padding: 1;
+  background: $panel-lighten-3;
+  /* height:;     */
+  margin: 1;
+  overflow-y: scroll;
 }
 
 .buttoncontainer {
-    height: 3;
-    margin:0;
-    margin-top:1;
+  height: 3;
+  margin: 0;
+  margin-top: 1;
 }
 
 .buttoncontainer > Button {
-    margin:0 1 0 1;
+  margin: 0 1 0 1;
 }
 
 .buttoncontainer > Input {
-    margin:0 1 0 1;
-    width: 30;
+  margin: 0 1 0 1;
+  width: 30;
 }
 
 .savecontainer {
-    width: 50%;
-    height: 15;
-    align: center top;
-    background:$surface;
+  width: 50%;
+  height: 15;
+  align: center top;
+  background: $surface;
 }
 
 .savecontainer Button {
-    margin:1;
-    margin-top:0;
+  margin: 1;
+  margin-top: 0;
 }
 
 .savecontainer > Input {
-    margin:1;
-    margin-top:0;
+  margin: 1;
+  margin-top: 0;
 }
 
 #savebuttons {
-    margin:0;
+  margin: 0;
 }
 
 #savefeedback {
-    margin:0;
-    padding:1;
-    width: auto;
+  margin: 0;
+  padding: 1;
+  width: auto;
 }
 
+#menu {
+  padding: 0;
+  margin: 0;
+  background: $surface;
+}
 
+#menu Label {
+  padding: 1;
+  margin: 0;
+}
+
+#startcontainer {
+  width: 50%;
+  height: 15;
+  align: center top;
+  background: $surface;
+}
+
+#startcontainer .titlelabel {
+  margin: 0;
+  margin-bottom: 1;
+}

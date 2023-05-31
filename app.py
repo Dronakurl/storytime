@@ -10,19 +10,7 @@ from textual.css.query import NoMatches
 from textual.message import Message
 from textual.reactive import reactive
 from textual.screen import ModalScreen, Screen
-from textual.widgets import DataTable, Footer, Header
-from textual.widgets import (
-    Button,
-    DirectoryTree,
-    Footer,
-    Input,
-    Label,
-    ListItem,
-    ListView,
-    Markdown,
-    Static,
-    TextLog,
-)
+from textual.widgets import *
 from textual.worker import WorkerState
 
 from gptstory import StoryGenerator, gptstory
@@ -72,7 +60,10 @@ class MyHeader(Static):
     stats = reactive("Stats")
 
     def compose(self):
-        yield Horizontal(Label("Storyteller", id="headertitle"), Label("Stats", id="headerstats"))
+        yield Horizontal(
+            Label("Storyteller", id="headertitle"),
+            Label("Stats", id="headerstats"),
+        )
 
     def watch_title(self, title):
         self.query_one("#headertitle").update(title)
@@ -84,9 +75,9 @@ class MyHeader(Static):
 class StoryInterface(Screen):
     BINDINGS = [
         ("q", "quit", "Quit"),
-        Binding("c", "focus('choices')", "Choices", show=False),
-        ("o", "load_screen", "Load Story"),
-        ("s", "save_screen", "Save Story"),
+        ("m", "menu_screen", "Menu"),
+        # ("o", "load_screen", "Load Story"),
+        # ("s", "save_screen", "Save Story"),
         ("p", "properties_screen", "Properties"),
         *([("g", "generate_screen", "Generate")] if gptstory else []),
         *(
@@ -134,6 +125,9 @@ class StoryInterface(Screen):
 
     def action_save_screen(self):
         app.push_screen("Save")
+
+    def action_menu_screen(self):
+        app.push_screen("Start")
 
     def action_properties_screen(self):
         app.push_screen("Properties")
@@ -212,8 +206,7 @@ class SettingsScreen(ModalScreen):
         yield Footer()
 
     def action_cancel(self):
-        """Return to the story screen."""
-        app.push_screen("Story")
+        app.pop_screen()
 
     def on_mount(self) -> None:
         self.set_focus(self.query_one("FilteredDirectoryTree"))
@@ -233,6 +226,7 @@ class GenerateOut(TextLog):
 class GenerateScreen(ModalScreen):
     BINDINGS: ClassVar[list[BindingType]] = [
         ("q", "quit", "Quit"),
+        ("m", "menu", "Menu"),
         ("c", "cancel", "Cancel"),
         ("s", "save", "Save story"),
     ]
@@ -252,12 +246,11 @@ class GenerateScreen(ModalScreen):
         )
         yield Footer()
 
+    def action_menu(self):
+        app.push_screen("Start")
+
     def action_cancel(self):
-        # Cancel the story generation
-        for w in app.workers:
-            if w.name == "upd_gptout" and w.state == WorkerState.RUNNING:
-                w.cancel()
-        # app.push_screen("Story")
+        app.push_screen("Story")
 
     def action_save(self):
         app.push_screen("Save")
@@ -284,6 +277,10 @@ class GenerateScreen(ModalScreen):
         self.post_message(TextLogMessage(f"Button pressed: {event.button.id}"))
         if event.button.id == "cancel":
             self.action_cancel()
+            # Cancel the story generation
+            for w in app.workers:
+                if w.name == "upd_gptout" and w.state == WorkerState.RUNNING:
+                    w.cancel()
         elif event.button.id == "usestory":
             self.post_message(TextLogMessage(f"Using story"))
             st = Story.from_markdown(self.query_one("#gptout").gptout)
@@ -385,9 +382,53 @@ class PropertiesScreen(ModalScreen):
         app.push_screen("Story")
 
 
+class MenuListView(ListView):
+    BINDINGS = [
+        Binding("j", "cursor_down", "Cursor Down", show=False),
+        Binding("k", "cursor_up", "Cursor Up", show=False),
+        Binding("l", "select_cursor", "Select", show=False),
+    ]
+
+    def compose(self) -> ComposeResult:
+        yield ListItem(Label("Load story"), id="menu_load")
+        yield ListItem(Label("Generate story"), id="menu_generate")
+        yield ListItem(Label("Quit"), id="menu_quit")
+
+
+class StartScreen(Screen):
+    """The start screen of the app."""
+
+    BINDINGS = [
+        ("q", "quit", "Quit"),
+    ]
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield Vertical(
+            Label("Storytime", classes="titlelabel"),
+            MenuListView(id="menu"),
+            id="startcontainer",
+            # yield OptionList("Load", "Generate", "Quit")
+        )
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.set_focus(self.query_one("#menu"))
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        self.log(f"Selected: {event.item.id}")
+        if event.item.id == "menu_load":
+            app.push_screen("Load")
+        elif event.item.id == "menu_generate":
+            app.push_screen("Generate")
+        elif event.item.id == "menu_quit":
+            app.quit()
+
+
 class Storytime(App):
     SCREENS = {
-        "Story": StoryInterface(id="storyscreen"),
+        "Start": StartScreen(),
+        "Story": StoryInterface(),
         "Load": SettingsScreen(),
         "Save": SaveScreen(),
         "Properties": PropertiesScreen(),
@@ -396,7 +437,13 @@ class Storytime(App):
     CSS_PATH = "./assets/app.css"
 
     def on_mount(self) -> None:
+        """Start all Screens"""
         self.push_screen("Story")
+        self.push_screen("Load")
+        self.push_screen("Save")
+        self.push_screen("Generate")
+        self.push_screen("Properties")
+        self.push_screen("Start")
 
     # The app must handle events to pass them to other screens.
     def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected) -> None:
