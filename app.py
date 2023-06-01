@@ -41,9 +41,7 @@ class Choices(ListView):
     choices = reactive(dict(choice1=Choice("Choice 1", "initial")))
 
     async def watch_choices(self, choices):
-        """Update the choices."""
         await self.clear()
-        self.log(choices)
         for nextdialogid, content in choices.items():
             self.append(
                 ListItem(
@@ -189,7 +187,101 @@ class FilteredDirectoryTree(DirectoryTree):
         ]
 
 
-class SettingsScreen(ModalScreen):
+from dataclasses import dataclass
+
+
+@dataclass
+class StoryItem:
+    """A story item for the list view."""
+
+    title: str
+    filename: str
+    stats: str
+    fullpath: Path
+
+
+def getfilelist(mypath: str, suffix: str, withpath: bool = False) -> list:
+    """Find all files in folders and subfolders given a specific extension"""
+    p = Path(mypath).glob("**/*." + suffix)
+    l = [x for x in p if x.is_file()]
+    if withpath == False:
+        l = [f.name for f in l]
+    return l
+
+
+class StoryListItem(ListItem):
+    contents = reactive(
+        StoryItem(
+            title="The Story",
+            filename="story.md",
+            stats="0 dialogs",
+            fullpath=Path("story.md"),
+        )
+    )
+
+    def compose(self) -> ComposeResult:
+        yield Vertical(
+            Label("The Story", classes="storylisttitle"),
+            Horizontal(
+                Label("story.md", classes="storylistfilename"),
+                Label("0 dialogues", classes="storyliststats"),
+            ),
+        )
+
+    def watch_contents(self, contents):
+        self.query_one(".storylisttitle").update(contents.title)
+        self.query_one(".storylistfilename").update(contents.filename)
+        self.query_one(".storyliststats").update(contents.stats)
+
+    def watch_highlighted(self, highlighted):
+        if highlighted:
+            self.set_classes("storylistitemhighlighted")
+        else:
+            self.set_classes("storylistitem")
+
+
+class ListStories(ListView):
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("enter", "select_cursor", "Select", show=False),
+        Binding("k", "cursor_up", "Cursor Up", show=False),
+        Binding("j", "cursor_down", "Cursor Down", show=False),
+        Binding("l", "select_cursor", "Select", show=False),
+    ]
+
+    stories = reactive(
+        [
+            StoryItem(
+                title="The Story",
+                filename="story.md",
+                stats="0 dialogues",
+                fullpath=Path("story.md"),
+            )
+        ]
+    )
+
+    async def watch_stories(self, stories):
+        await self.clear()
+        for story in stories:
+            listitem = StoryListItem()
+            await self.append(listitem)
+            listitem.contents = story
+
+    def on_mount(self) -> None:
+        storyfiles = getfilelist("./", "md", withpath=True)
+        stories = [Story.from_markdown_file(fname=f) for f in storyfiles if f.name != "README.md"]
+        storyitems = [
+            StoryItem(
+                title=s.title,
+                filename=Path(s.markdown_file).name,
+                stats=f"{len(s.dialogs)} dialogues",
+                fullpath=Path(s.markdown_file),
+            )
+            for s in stories
+        ]
+        self.stories = storyitems
+
+
+class LoadScreen(ModalScreen):
     BINDINGS: ClassVar[list[BindingType]] = [
         ("q", "quit", "Quit"),
         ("c", "cancel", "Cancel"),
@@ -200,8 +292,10 @@ class SettingsScreen(ModalScreen):
         yield Header()
         yield Vertical(
             Label("Load story", classes="titlelabel"),
+            ListStories(id="storylist"),
             FilteredDirectoryTree("./", id="directorytree"),
-            classes="container",
+            Button("Pick file from directory", id="pickfile"),
+            classes="loadcontainer",
         )
         yield Footer()
 
@@ -209,7 +303,33 @@ class SettingsScreen(ModalScreen):
         app.pop_screen()
 
     def on_mount(self) -> None:
-        self.set_focus(self.query_one("FilteredDirectoryTree"))
+        self.set_focus(self.query_one("#storylist"))
+        self.query_one("#directorytree").styles.display = "none"
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.log("button pressed")
+        self.log(event.button.id)
+        self.log(self.query_one("#pickfile").label)
+        if event.button.id != "pickfile":
+            return
+        if str(self.query_one("#pickfile").label) == "Pick file from directory":
+            self.query_one("#pickfile").label = "Pick file from list"
+            self.query_one("#directorytree").styles.display = "block"
+            self.query_one("#storylist").styles.display = "none"
+            self.set_focus(self.query_one("#directorytree"))
+        else:
+            self.query_one("#pickfile").label = "Pick file from directory"
+            self.query_one("#directorytree").styles.display = "none"
+            self.query_one("#storylist").styles.display = "block"
+            self.set_focus(self.query_one("#storylist"))
+
+    def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected) -> None:
+        app.push_screen("Story")
+        app.screen.load_story(Path(event.path))
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        app.push_screen("Story")
+        app.screen.load_story(Path(event.item.contents.fullpath))
 
 
 class GenerateOut(TextLog):
@@ -429,7 +549,7 @@ class Storytime(App):
     SCREENS = {
         "Start": StartScreen(),
         "Story": StoryInterface(),
-        "Load": SettingsScreen(),
+        "Load": LoadScreen(),
         "Save": SaveScreen(),
         "Properties": PropertiesScreen(),
         "Generate": GenerateScreen(),
@@ -444,11 +564,6 @@ class Storytime(App):
         self.push_screen("Generate")
         self.push_screen("Properties")
         self.push_screen("Start")
-
-    # The app must handle events to pass them to other screens.
-    def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected) -> None:
-        self.push_screen("Story")
-        self.screen.load_story(Path(event.path))
 
     # The custom TextLogMessage event is handled here.
     def on_text_log_message(self, event: TextLogMessage):

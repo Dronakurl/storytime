@@ -2,7 +2,8 @@ Screen {
   align: center middle;
 }
 
-#choicecontainer Label, #choicecontainer Markdown {
+#choicecontainer Label,
+#choicecontainer Markdown {
   width: 100%;
   padding: 1;
   padding-bottom: -1;
@@ -178,4 +179,57 @@ Screen {
 #startcontainer .titlelabel {
   margin: 0;
   margin-bottom: 1;
+}
+
+.storylistitem,
+.storylistitemhighlighted {
+  padding: 0;
+  margin: 0;
+  border: solid white;
+  /* margin-bottom: 1; */
+}
+.storylistitem {
+  background: $surface;
+}
+.storylistitemhighlighted {
+  background: $surface-lighten-3;
+}
+
+.storylisttitle {
+  text-style: bold;
+  background: $panel;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+.storylistitemhighlighted .storylisttitle {
+  background: $accent-darken-1;
+}
+
+.storylistfilename {
+  text-style: italic;
+  width: 70%;
+}
+
+.storyliststats {
+  width: 30%;
+  margin-left: 3;
+}
+
+#storylist {
+  padding: 0;
+  margin: 1;
+  background: red;
+}
+
+#pickfile {
+  margin: 1;
+}
+
+.loadcontainer {
+  height: 90%;
+  width: 50%;
+  align: center top;
+  background: $surface;
 }
