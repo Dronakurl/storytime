@@ -14,7 +14,7 @@ You can also create a story with the built-in [openai](https://openai.com) integ
 Storytime needs `python`. Install with [`poetry`](https://python-poetry.org/).
 
 ```
-poetry install
+poetry install --all-extras
 ```
 
 If you don't like `poetry`, you can install with `pip`:
