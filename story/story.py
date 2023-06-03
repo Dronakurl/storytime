@@ -2,9 +2,45 @@
 This module contains the classes that represent a story.
 A Story is a collection of Dialogs.
 A Dialog contains a selection of Choices.
+The Story class is responsible for handling the Story with logic
 """
 from pathlib import Path
 import re
+
+
+try:
+    import networkx as nx
+except ImportError:
+    _graph = False
+else:
+    _graph = True
+
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    _plot = False
+else:
+    _plot = True
+
+
+def requires(extra, description="", raise_error=True, dummy=True):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            if extra:
+                return func(*args, **kwargs)
+            else:
+                print(f"Dependencies not met! {description}")
+                print("Install optional dependencies with `poetry install --all-extras`")
+                if raise_error:
+                    raise ImportError(f"Essential packages not installed to call this function. {description}")
+                elif dummy:
+                    return lambda *args, **kwargs: None  # pyright: ignore
+                else:
+                    return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 class Choice:
@@ -61,6 +97,7 @@ class Story:
         self.markdown_file = "story.md"
         self.properties = {}
         self.exec_logic()
+        self.G = nx.DiGraph()
 
     def to_Markdown(self):
         res = f"# {self.title}\n\n"
@@ -98,7 +135,32 @@ class Story:
             prvdiag = self.prevdialogids[0]
         self.currentdialog = self.dialogs[prvdiag]
 
+    @requires(extra=_graph, description="NetworkX is required to create a graph", raise_error=False)
+    def create_graph(self):
+        self.G = nx.DiGraph()
+        for dialogid in self.dialogs:
+            self.G.add_node(dialogid)
+            for choiceid in self.dialogs[dialogid].choices:
+                self.G.add_edge(dialogid, choiceid)
+
+    @requires(extra=_plot, description="Matplotlib is required to plot the graph", raise_error=False)
+    def plot_graph(self, graphfname: str = None):
+        self.create_graph()
+        nx.draw(self.G, with_labels=True)
+        if graphfname is not None:
+            plt.savefig(graphfname)
+        else:
+            plt.show()
+
+    @requires(extra=_graph, description="NetworkX is required to create a graph", raise_error=False)
+    def has_subgraphs(self):
+        self.create_graph()
+        # check if there are subgraphs (i.e. multiple stories)
+        return nx.number_weakly_connected_components(self.G) > 1
+
     def check_integrity(self):
+        if _graph and self.has_subgraphs():
+            return False
         # check if all the choices are valid
         for dialogid in self.dialogs:
             for choiceid in self.dialogs[dialogid].choices:
@@ -118,13 +180,26 @@ class Story:
             self.dialogs[dialogid].choices.pop(choiceid)
         return [c[1] for c in choices_to_remove]
 
-    def exec_logic_old(self):
-        if len(self.currentdialog.logic) <= 1:
+    @requires(extra=_graph, description="NetworkX required for graph analysis of story", raise_error=False)
+    def restrict_to_largest_substory(self):
+        if _graph and not self.has_subgraphs():
             return
-        try:
-            exec(self.currentdialog.logic)
-        except Exception as e:
-            print(f"Error {e} in logic {self.currentdialog.logic}")
+        self.create_graph()
+        # find the largest subgraph
+        largest_subgraph = max(nx.weakly_connected_components(self.G), key=len)
+        # remove all the dialogs that are not in the largest subgraph
+        dialogs_to_remove = [d for d in self.dialogs if d not in largest_subgraph]
+        for d in dialogs_to_remove:
+            self.dialogs.pop(d)
+        # remove all the choices that are not in the largest subgraph
+        choices_to_remove = []
+        for dialogid in self.dialogs:
+            for choiceid in self.dialogs[dialogid].choices:
+                if choiceid not in self.dialogs:
+                    choices_to_remove.append((dialogid, choiceid))
+        # Remove dangling choices outside the loop
+        for dialogid, choiceid in choices_to_remove:
+            self.dialogs[dialogid].choices.pop(choiceid)
 
     def exec_logic(self):
         if len(self.currentdialog.logic) <= 1:

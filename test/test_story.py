@@ -46,7 +46,7 @@ def get_test_story():
                 + os.linesep
                 + "PROPERTY 'test2' = 'test' + 1"
                 + os.linesep
-                + "PROPERTY 'test3' = self.story.title:='adsd'",
+                + "PROPERTY 'test3' = (self.story.title:='adsd')",
             ),
             "eins": Dialog(
                 "eins",
@@ -59,6 +59,16 @@ def get_test_story():
             "zwei": Dialog("zwei", "dritter text", {}),
         },
         "My Story",
+    )
+
+
+def test_story_error(capsys):
+    # test if errors in the logic are printed
+    get_test_story()
+    captured = capsys.readouterr()
+    assert (
+        captured.out.strip()
+        == "Error cannot use assignment expressions with attribute (<string>, line 1) in logic PROPERTY 'test3' = (self.story.title:='adsd')".strip()
     )
 
 
