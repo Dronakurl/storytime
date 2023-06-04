@@ -1,1 +1,3 @@
-from .story import Story, Dialog, Choice
+from .story import Story
+from .choice import Choice
+from .dialog import Dialog
