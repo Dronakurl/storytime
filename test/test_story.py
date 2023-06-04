@@ -5,7 +5,7 @@ import os
 
 def test_choice():
     choice = Choice("First line with Ü\nSecond line with #", "Next Dialogue ID")
-    assert choice.to_Markdown() == "- Next Dialogue ID: First line with Ü\nSecond line with #"
+    assert choice.to_markdown() == "- Next Dialogue ID: First line with Ü\nSecond line with #"
 
 
 def test_dialog():
@@ -19,7 +19,7 @@ def test_dialog():
         "PROPERTY test = 1",
     )
     assert (
-        dialog.to_Markdown()
+        dialog.to_markdown()
         == """## Coole IDß
 LOGIC PROPERTY test = 1
 
@@ -128,7 +128,7 @@ def test_from_markdown_file(file):
     with open(file) as f:
         md = f.read().strip()
     md = os.linesep.join([s for s in md.splitlines() if s])
-    sm = story.to_Markdown()
+    sm = story.to_markdown()
     sm = os.linesep.join([s for s in sm.splitlines() if s])
     assert md == sm
 

@@ -4,9 +4,13 @@ A Story is a collection of Dialogs.
 A Dialog contains a selection of Choices.
 The Story class is responsible for handling the Story with logic
 """
-from dataclasses import dataclass
+import os
 from pathlib import Path
 import re
+
+from .choice import Choice
+from .dialog import Dialog
+from .require_decorator import Requirement, requires
 
 
 try:
@@ -23,86 +27,28 @@ except ImportError:
 else:
     _plot = True
 
-
-@dataclass
-class Requirement:
-    name: str
-    extra: bool
-    description: str
-    raise_error: bool = False
-    dummy: bool = True
+try:
+    import openai
+except ImportError:
+    _openai = False
+else:
+    _openai = True
+    apikey = os.getenv("OPENAI_API_KEY")
+    if apikey is None:
+        print("OPENAI_API_KEY not set")
+        _openai = False
+    openai.api_key = apikey
 
 
 networkx_req = Requirement("networkx", _graph, "Network graph", raise_error=True)
 matplotlib_req = Requirement("matplotlib", _plot, "Plotting the graph", raise_error=True)
-
-
-def requires(*requirements: Requirement):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            if all([x.extra for x in requirements]):
-                return func(*args, **kwargs)
-            else:
-                print(f"Dependencies not met! {' -- '.join([r.description for r in requirements])}")
-                print("Install optional dependencies with `poetry install --all-extras`")
-                if any([x.raise_error for x in requirements]):
-                    raise ImportError(f"Essential packages not installed to call this function.")
-                elif any([x.dummy for x in requirements]):
-                    return lambda *args, **kwargs: None  # pyright: ignore
-                else:
-                    return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
-class Choice:
-    def __init__(self, text: str, nextdialogid: str):
-        self.nextdialogid = nextdialogid
-        self.text = text
-
-    def __repr__(self):
-        return f"Choice({self.text}, {self.nextdialogid})"
-
-    def to_Markdown(self):
-        return f"- {self.nextdialogid}: {self.text}"
-
-    def __eq__(self, other):
-        return self.to_Markdown() == other.to_Markdown()
-
-
-class Dialog:
-    def __init__(self, dialogid: str, text: str, choices: dict[str, Choice], logic: str = ""):
-        self.dialogid = dialogid
-        self.text = text
-        self.choices = choices
-        self.logic = logic
-
-    def addchoice(self, text: str, nextdialogid: str):
-        choice = Choice(text, nextdialogid)
-        self.choices[choice.nextdialogid] = choice
-
-    def __repr__(self):
-        return f"Dialog({self.dialogid}, {self.text}, {self.choices})"
-
-    def choices_to_Markdown(self):
-        return "\n\n".join([self.choices[x].to_Markdown() for x in self.choices])
-
-    def write_logic(self):
-        # each line is prefixed with "LOGIC: "
-        if self.logic.strip() == "":
-            return ""
-        return "\n".join([f"LOGIC {x}" for x in self.logic.split("\n")]) + "\n\n"
-
-    def to_Markdown(self):
-        return f"## {self.dialogid}\n{self.write_logic()}{self.text}\n{self.choices_to_Markdown()}"
-
-    def __eq__(self, other):
-        return self.to_Markdown() == other.to_Markdown()
+openai_req = Requirement("openai", _openai, "OpenAI API", raise_error=True)
 
 
 class Story:
+    with open("data/minimal.md", "r") as f:
+        storytemplate = f.read()
+
     def __init__(self, dialogs: dict[str, Dialog], title: str = "Story"):
         self.dialogs = dialogs
         self.currentdialog = self.dialogs[list(dialogs.keys())[0]]
@@ -113,23 +59,11 @@ class Story:
         self.exec_logic()
         self.G = nx.DiGraph()
 
-    def to_Markdown(self):
-        res = f"# {self.title}\n\n"
-        res += "\n\n".join([self.dialogs[x].to_Markdown() for x in self.dialogs])
-        res = res.strip()
-        return res
-
     def __repr__(self):
-        return self.to_Markdown()
+        return self.to_markdown()
 
     def __eq__(self, other):
-        return self.to_Markdown() == other.to_Markdown()
-
-    def save_markdown(self, fname: str = None):
-        if fname is not None:
-            self.markdown_file = fname
-        with open(Path(self.markdown_file), "w") as f:
-            f.write(self.to_Markdown())
+        return self.to_markdown() == other.to_markdown()
 
     def next_dialog(self, nextdialogid: str):
         self.prevdialogids.append(self.currentdialog.dialogid)
@@ -137,83 +71,6 @@ class Story:
         logmsg = self.currentdialog.logic
         self.exec_logic()
         return logmsg
-
-    def addchoice(self, text: str, nextdialogid: str):
-        self.currentdialog.addchoice(text, nextdialogid)
-
-    def back_dialog(self):
-        print(self.prevdialogids)
-        if len(self.prevdialogids) > 1:
-            prvdiag = self.prevdialogids.pop()
-        else:
-            prvdiag = self.prevdialogids[0]
-        self.currentdialog = self.dialogs[prvdiag]
-
-    @requires(networkx_req)
-    def create_graph(self):
-        self.G = nx.DiGraph()
-        for dialogid in self.dialogs:
-            self.G.add_node(dialogid)
-            for choiceid in self.dialogs[dialogid].choices:
-                self.G.add_edge(dialogid, choiceid)
-
-    @requires(matplotlib_req, networkx_req)
-    def plot_graph(self, graphfname: str = None):
-        self.create_graph()
-        nx.draw(self.G, with_labels=True)
-        if graphfname is not None:
-            plt.savefig(graphfname)
-        else:
-            plt.show()
-
-    @requires(networkx_req)
-    def has_subgraphs(self):
-        self.create_graph()
-        # check if there are subgraphs (i.e. multiple stories)
-        return nx.number_weakly_connected_components(self.G) > 1
-
-    def check_integrity(self):
-        if _graph and self.has_subgraphs():
-            return False
-        # check if all the choices are valid
-        for dialogid in self.dialogs:
-            for choiceid in self.dialogs[dialogid].choices:
-                if choiceid not in self.dialogs:
-                    return False
-        return True
-
-    def prune_dangling_choices(self):
-        # remove choices that point to a dialog that does not exist
-        choices_to_remove = []
-        for dialogid in self.dialogs:
-            for choiceid in self.dialogs[dialogid].choices:
-                if choiceid not in self.dialogs:
-                    choices_to_remove.append((dialogid, choiceid))
-        # Remove dangling choices outside the loop
-        for dialogid, choiceid in choices_to_remove:
-            self.dialogs[dialogid].choices.pop(choiceid)
-        return [c[1] for c in choices_to_remove]
-
-    @requires(networkx_req)
-    def restrict_to_largest_substory(self):
-        if _graph and not self.has_subgraphs():
-            return
-        self.create_graph()
-        # find the largest subgraph
-        largest_subgraph = max(nx.weakly_connected_components(self.G), key=len)
-        # remove all the dialogs that are not in the largest subgraph
-        dialogs_to_remove = [d for d in self.dialogs if d not in largest_subgraph]
-        for d in dialogs_to_remove:
-            self.dialogs.pop(d)
-        # remove all the choices that are not in the largest subgraph
-        choices_to_remove = []
-        for dialogid in self.dialogs:
-            for choiceid in self.dialogs[dialogid].choices:
-                if choiceid not in self.dialogs:
-                    choices_to_remove.append((dialogid, choiceid))
-        # Remove dangling choices outside the loop
-        for dialogid, choiceid in choices_to_remove:
-            self.dialogs[dialogid].choices.pop(choiceid)
 
     def exec_logic(self):
         if len(self.currentdialog.logic) <= 1:
@@ -245,6 +102,29 @@ class Story:
                         self.next_dialog(x.group(1))
                 except Exception as e:
                     print(f"Error {e} in logic {strl}")
+
+    def addchoice(self, text: str, nextdialogid: str):
+        self.currentdialog.addchoice(text, nextdialogid)
+
+    def back_dialog(self):
+        print(self.prevdialogids)
+        if len(self.prevdialogids) > 1:
+            prvdiag = self.prevdialogids.pop()
+        else:
+            prvdiag = self.prevdialogids[0]
+        self.currentdialog = self.dialogs[prvdiag]
+
+    def save_markdown(self, fname: str = None):
+        if fname is not None:
+            self.markdown_file = fname
+        with open(Path(self.markdown_file), "w") as f:
+            f.write(self.to_markdown())
+
+    def to_markdown(self):
+        res = f"# {self.title}\n\n"
+        res += "\n\n".join([self.dialogs[x].to_markdown() for x in self.dialogs])
+        res = res.strip()
+        return res
 
     @classmethod
     def from_markdown(cls, markdown: str):
@@ -312,3 +192,69 @@ class Story:
             res = cls.from_markdown(md)
             res.markdown_file = str(fname)
             return res
+
+    @requires(networkx_req)
+    def create_graph(self):
+        self.G = nx.DiGraph()
+        for dialogid in self.dialogs:
+            self.G.add_node(dialogid)
+            for choiceid in self.dialogs[dialogid].choices:
+                self.G.add_edge(dialogid, choiceid)
+
+    @requires(matplotlib_req, networkx_req)
+    def plot_graph(self, graphfname: str = None):
+        self.create_graph()
+        nx.draw(self.G, with_labels=True)
+        if graphfname is not None:
+            plt.savefig(graphfname)
+        else:
+            plt.show()
+
+    @requires(networkx_req)
+    def has_subgraphs(self):
+        self.create_graph()
+        # check if there are subgraphs (i.e. multiple stories)
+        return nx.number_weakly_connected_components(self.G) > 1
+
+    def check_integrity(self):
+        if _graph and self.has_subgraphs():
+            return False
+        # check if all the choices are valid
+        for dialogid in self.dialogs:
+            for choiceid in self.dialogs[dialogid].choices:
+                if choiceid not in self.dialogs:
+                    return False
+        return True
+
+    def prune_dangling_choices(self):
+        # remove choices that point to a dialog that does not exist
+        choices_to_remove = []
+        for dialogid in self.dialogs:
+            for choiceid in self.dialogs[dialogid].choices:
+                if choiceid not in self.dialogs:
+                    choices_to_remove.append((dialogid, choiceid))
+        # Remove dangling choices outside the loop
+        for dialogid, choiceid in choices_to_remove:
+            self.dialogs[dialogid].choices.pop(choiceid)
+        return [c[1] for c in choices_to_remove]
+
+    @requires(networkx_req)
+    def restrict_to_largest_substory(self):
+        if _graph and not self.has_subgraphs():
+            return
+        self.create_graph()
+        # find the largest subgraph
+        largest_subgraph = max(nx.weakly_connected_components(self.G), key=len)
+        # remove all the dialogs that are not in the largest subgraph
+        dialogs_to_remove = [d for d in self.dialogs if d not in largest_subgraph]
+        for d in dialogs_to_remove:
+            self.dialogs.pop(d)
+        # remove all the choices that are not in the largest subgraph
+        choices_to_remove = []
+        for dialogid in self.dialogs:
+            for choiceid in self.dialogs[dialogid].choices:
+                if choiceid not in self.dialogs:
+                    choices_to_remove.append((dialogid, choiceid))
+        # Remove dangling choices outside the loop
+        for dialogid, choiceid in choices_to_remove:
+            self.dialogs[dialogid].choices.pop(choiceid)
