@@ -4,6 +4,7 @@ A Story is a collection of Dialogs.
 A Dialog contains a selection of Choices.
 The Story class is responsible for handling the Story with logic
 """
+from dataclasses import dataclass
 from pathlib import Path
 import re
 
@@ -23,17 +24,30 @@ else:
     _plot = True
 
 
-def requires(extra, description="", raise_error=True, dummy=True):
+@dataclass
+class Requirement:
+    name: str
+    extra: bool
+    description: str
+    raise_error: bool = False
+    dummy: bool = True
+
+
+networkx_req = Requirement("networkx", _graph, "Network graph", raise_error=True)
+matplotlib_req = Requirement("matplotlib", _plot, "Plotting the graph", raise_error=True)
+
+
+def requires(*requirements: Requirement):
     def decorator(func):
         def wrapper(*args, **kwargs):
-            if extra:
+            if all([x.extra for x in requirements]):
                 return func(*args, **kwargs)
             else:
-                print(f"Dependencies not met! {description}")
+                print(f"Dependencies not met! {' -- '.join([r.description for r in requirements])}")
                 print("Install optional dependencies with `poetry install --all-extras`")
-                if raise_error:
-                    raise ImportError(f"Essential packages not installed to call this function. {description}")
-                elif dummy:
+                if any([x.raise_error for x in requirements]):
+                    raise ImportError(f"Essential packages not installed to call this function.")
+                elif any([x.dummy for x in requirements]):
                     return lambda *args, **kwargs: None  # pyright: ignore
                 else:
                     return func(*args, **kwargs)
@@ -135,7 +149,7 @@ class Story:
             prvdiag = self.prevdialogids[0]
         self.currentdialog = self.dialogs[prvdiag]
 
-    @requires(extra=_graph, description="NetworkX is required to create a graph", raise_error=False)
+    @requires(networkx_req)
     def create_graph(self):
         self.G = nx.DiGraph()
         for dialogid in self.dialogs:
@@ -143,7 +157,7 @@ class Story:
             for choiceid in self.dialogs[dialogid].choices:
                 self.G.add_edge(dialogid, choiceid)
 
-    @requires(extra=_plot, description="Matplotlib is required to plot the graph", raise_error=False)
+    @requires(matplotlib_req, networkx_req)
     def plot_graph(self, graphfname: str = None):
         self.create_graph()
         nx.draw(self.G, with_labels=True)
@@ -152,7 +166,7 @@ class Story:
         else:
             plt.show()
 
-    @requires(extra=_graph, description="NetworkX is required to create a graph", raise_error=False)
+    @requires(networkx_req)
     def has_subgraphs(self):
         self.create_graph()
         # check if there are subgraphs (i.e. multiple stories)
@@ -180,7 +194,7 @@ class Story:
             self.dialogs[dialogid].choices.pop(choiceid)
         return [c[1] for c in choices_to_remove]
 
-    @requires(extra=_graph, description="NetworkX required for graph analysis of story", raise_error=False)
+    @requires(networkx_req)
     def restrict_to_largest_substory(self):
         if _graph and not self.has_subgraphs():
             return
