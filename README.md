@@ -9,6 +9,8 @@ Just write a markdown file with your dialogues, choices and simple logic.
 An example file can be found in [`data/minimal.md`](data/minimal.md).
 You can also create a story with the built-in [openai](https://openai.com) integration.
 
+![screenshot](assets/readme.webp "Screenshot of Storytime")
+
 ## Installation
 
 Storytime needs `python`. Install with [`poetry`](https://python-poetry.org/).
