@@ -7,6 +7,7 @@ The Story class is responsible for handling the Story with logic
 import os
 from pathlib import Path
 import re
+import asyncio
 
 from .choice import Choice
 from .dialog import Dialog
@@ -46,8 +47,10 @@ openai_req = Requirement("openai", _openai, "OpenAI API", raise_error=True)
 
 
 class Story:
-    with open("data/minimal.md", "r") as f:
+    with open("data/minimal2.md", "r") as f:
         storytemplate = f.read()
+
+    defaultprompt = "Eine Geschichte über ein Kind, dass im Wald verloren geht"
 
     def __init__(self, dialogs: dict[str, Dialog], title: str = "Story"):
         self.dialogs = dialogs
@@ -57,7 +60,9 @@ class Story:
         self.markdown_file = "story.md"
         self.properties = {}
         self.exec_logic()
-        self.G = nx.DiGraph()
+        self.G = None
+        self.current_result = ""
+        self.delta = ""
 
     def __repr__(self):
         return self.to_markdown()
@@ -163,10 +168,12 @@ class Story:
                 if nextdialogid != "":
                     # a new choice is found, so the previous one is added to the dictionary
                     choices[nextdialogid] = Choice(choicetext, nextdialogid)
-                # regular expression to find the next dialog id
-                nextdialogid = re.search(r"- (.+):", line).group(1).strip()
-                # regular expression to find the choice text
-                choicetext = re.search(r": (.+)", line).group(1).strip()
+                x = re.search(r"- (.+): (.+)", line)
+                if x is not None:
+                    # regular expression to find the next dialog id
+                    nextdialogid = x.group(1).strip()
+                    # regular expression to find the choice text
+                    choicetext = x.group(2).strip()
             elif len(nextdialogid) > 0:
                 # the line is in the choices section
                 choicetext += "\n" + line
@@ -195,9 +202,17 @@ class Story:
 
     @requires(networkx_req)
     def create_graph(self):
+        """Create a networkx graph of the story"""
         self.G = nx.DiGraph()
         for dialogid in self.dialogs:
             self.G.add_node(dialogid)
+            # include logic choices
+            for line in self.dialogs[dialogid].logic.split("\n"):
+                if line.startswith("NEXTDIALOG"):
+                    x = re.search(r"NEXTDIALOG [\"\'](.*)[\"\'] IF", line)
+                    if x is not None:
+                        self.G.add_edge(dialogid, x.group(1))
+            # include normal choices
             for choiceid in self.dialogs[dialogid].choices:
                 self.G.add_edge(dialogid, choiceid)
 
@@ -218,11 +233,13 @@ class Story:
 
     def check_integrity(self):
         if _graph and self.has_subgraphs():
+            print("Integrity check failed: The story has multiple subgraphs")
             return False
         # check if all the choices are valid
         for dialogid in self.dialogs:
             for choiceid in self.dialogs[dialogid].choices:
                 if choiceid not in self.dialogs:
+                    print("Integrity check failed: Impossible choice: " + choiceid + " does not exist")
                     return False
         return True
 
@@ -258,3 +275,50 @@ class Story:
         # Remove dangling choices outside the loop
         for dialogid, choiceid in choices_to_remove:
             self.dialogs[dialogid].choices.pop(choiceid)
+
+    @classmethod
+    async def generate_story_from_file(cls, fname: str = "data/story.md", sleep_time: float = 0.1):
+        """Generate a story from a file for testing purposes without using OpenAI.
+        :param fname: The name of the file to read from.
+        :returns: a generator that yields the state of the current story and the delta that was just added
+        """
+        current_result = ""
+        with open(fname, "r") as f:
+            for line in f:
+                await asyncio.sleep(sleep_time)
+                delta = line
+                current_result += delta
+                yield current_result, delta
+
+    @classmethod
+    @requires(openai_req)
+    async def generate_story(cls, prompt: str = "", **kwargs):
+        """Generate a story from a prompt.
+        :param kwargs: Keyword arguments to pass to chatgpt
+        :returns: a generator that yields the state of the current story and the delta that was just added
+                when stream is True, otherwise returns the full story
+        """
+        if len(prompt) == 0:
+            prompt = cls.defaultprompt
+        completion = openai.ChatCompletion.acreate(
+            model="gpt-3.5-turbo",
+            # model="text-ada-001",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are an author writing a story for a text based role playing game. You write the story in the markdown structure of the following example, starting with 4 dialogues. Write in the language given in the prompt, but keep the keywords LOGIC, PROPERTIES and NEXTDIALOG in English. \n\n ```\n "
+                    + cls.storytemplate
+                    + "\n ```\n",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            stream=True,
+            **kwargs,
+        )
+        current_result = ""
+        async for chunk in await completion:
+            delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content")
+            if delta is None:
+                delta = ""
+            current_result += delta
+            yield current_result, delta

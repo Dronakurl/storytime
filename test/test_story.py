@@ -120,6 +120,7 @@ def test_property_logic_minimal():
     [
         "./data/story.md",
         "./data/minimal.md",
+        "./data/minimal2.md",
         "./data/broken.md",
     ],
 )
@@ -131,6 +132,19 @@ def test_from_markdown_file(file):
     sm = story.to_markdown()
     sm = os.linesep.join([s for s in sm.splitlines() if s])
     assert md == sm
+
+
+@pytest.mark.parametrize(
+    "file",
+    [
+        "./data/story.md",
+        "./data/minimal.md",
+        "./data/minimal2.md",
+    ],
+)
+def test_integrity_of_minimal(file):
+    story = Story.from_markdown_file(file)
+    assert story.check_integrity()
 
 
 def test_addchoice():
