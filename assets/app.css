@@ -2,6 +2,11 @@ Screen {
   align: center middle;
 }
 
+#choicecontainer {
+  height: auto;
+  padding: 0;
+}
+
 #choicecontainer Label,
 #choicecontainer Markdown {
   width: 100%;
@@ -18,9 +23,10 @@ Screen {
 
 #text {
   column-span: 3;
-  height: 100%;
+  height: auto;
   background: $primary-background;
   color: white;
+  overflow-y: auto;
   margin: 1;
   padding: 1;
 }
@@ -30,7 +36,7 @@ Screen {
   column-span: 3;
   padding: 1;
   background: $surface;
-  height: 100%;
+  height: auto;
 }
 
 #log {

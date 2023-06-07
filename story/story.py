@@ -47,7 +47,7 @@ openai_req = Requirement("openai", _openai, "OpenAI API", raise_error=True)
 
 
 class Story:
-    with open("data/minimal2.md", "r") as f:
+    with open("data/minimal.md", "r") as f:
         storytemplate = f.read()
 
     defaultprompt = "Eine Geschichte über ein Kind, dass im Wald verloren geht"
@@ -306,7 +306,7 @@ class Story:
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an author writing a story for a text based role playing game. You write the story in the markdown structure of the following example, starting with 4 dialogues. Write in the language given in the prompt, but keep the keywords LOGIC, PROPERTIES and NEXTDIALOG in English. \n\n ```\n "
+                    "content": "Write the story for a text based role playing game in the markdown structure of the following example. Each dialogue is identified with its heading. Each choice starts with a hyphen and the heading of the dialogue to which the choice leads. After a colon, the description of the choice starts. Write in the language given in the prompt, but keep the keywords LOGIC, PROPERTIES and NEXTDIALOG in English. \n\n ```\n "
                     + cls.storytemplate
                     + "\n ```\n",
                 },

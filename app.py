@@ -395,7 +395,6 @@ class GenerateScreen(ModalScreen):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         self.post_message(TextLogMessage(f"Button pressed: {event.button.id}"))
         if event.button.id == "cancel":
-            self.action_cancel()
             # Cancel the story generation
             for w in app.workers:
                 if w.name == "upd_gptout" and w.state == WorkerState.RUNNING:
