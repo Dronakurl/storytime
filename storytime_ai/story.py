@@ -9,8 +9,9 @@ from importlib.resources import files
 import os
 from pathlib import Path
 import re
+import sys
 
-# import data
+from dotenv import load_dotenv
 
 from .choice import Choice
 from .dialog import Dialog
@@ -36,8 +37,10 @@ except ImportError:
     _openai = False
 else:
     _openai = True
+    load_dotenv()
     apikey = os.getenv("OPENAI_API_KEY")
     if apikey is None:
+        # read from .env file
         print("OPENAI_API_KEY not set")
         _openai = False
     openai.api_key = apikey
@@ -242,7 +245,7 @@ class Story:
                 if choiceid not in self.dialogs:
                     print("Integrity check failed: Impossible choice: " + choiceid + " does not exist")
                     return False
-        print("Integrity check passed s")
+        print("Integrity check passed")
         return True
 
     def prune_dangling_choices(self):
@@ -324,3 +327,15 @@ class Story:
                 delta = ""
             current_result += delta
             yield current_result, delta
+
+
+def checkintegrity():
+    if len(sys.argv) < 1:
+        print("Please provide a filename")
+        sys.exit(1)
+    fname = Path(sys.argv[1])
+    if not fname.is_file():
+        print(f"File not found. Exiting. Given filename: {fname}")
+        sys.exit(1)
+    story = Story.from_markdown_file(fname)
+    story.check_integrity()

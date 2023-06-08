@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from importlib.resources import files
 from pathlib import Path
 import sys
 from typing import ClassVar, Iterable
@@ -13,7 +15,8 @@ from textual.screen import ModalScreen, Screen
 from textual.widgets import *
 from textual.worker import WorkerState
 
-from storytime_ai import Choice, Story, _openai
+from storytime_ai.choice import Choice
+from storytime_ai.story import Story, _openai
 
 
 class TextLogMessage(Message):
@@ -73,8 +76,6 @@ class StoryInterface(Screen):
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("m", "menu_screen", "Menu"),
-        # ("o", "load_screen", "Load Story"),
-        # ("s", "save_screen", "Save Story"),
         ("p", "properties_screen", "Properties"),
         *([("g", "generate_screen", "Generate")] if _openai else []),
         *(
@@ -101,36 +102,40 @@ class StoryInterface(Screen):
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         self.post_message(TextLogMessage(f"Selected: {event.item.id[6:]}"))
-        logmsg = app.story.next_dialog(event.item.id[6:])
+        logmsg = self.app.story.next_dialog(event.item.id[6:])
         self.post_message(TextLogMessage(f"Logic: {logmsg}"))
         self.display_currentdialog()
 
     def on_mount(self) -> None:
+        fileprovided = False
         if len(sys.argv) > 1:
             fname = Path(sys.argv[1])
+            fileprovided = True
         else:
-            fname = Path("./storytime_ai/templates/story.md")
+            fname = files("storytime_ai.templates").joinpath("story.md")
         self.load_story(fname)
+        if fileprovided:
+            self.app.push_screen("Story")
 
     def action_back(self):
         """Go back to the previous dialog."""
-        app.story.back_dialog()
+        self.app.story.back_dialog()
         self.display_currentdialog()
 
     def action_load_screen(self):
-        app.push_screen("Load")
+        self.app.push_screen("Load")
 
     def action_save_screen(self):
-        app.push_screen("Save")
+        self.app.push_screen("Save")
 
     def action_menu_screen(self):
-        app.push_screen("Start")
+        self.app.push_screen("Start")
 
     def action_properties_screen(self):
-        app.push_screen("Properties")
+        self.app.push_screen("Properties")
 
     def action_generate_screen(self):
-        app.push_screen("Generate")
+        self.app.push_screen("Generate")
 
     def action_toggle_log(self):
         if self.query_one("#log").styles.display == "none":
@@ -146,24 +151,24 @@ class StoryInterface(Screen):
         """Load the story from a file."""
         if not fname.is_file():
             raise FileNotFoundError
-        app.story = Story.from_markdown_file(fname)
-        self.post_message(TextLogMessage(f"Loaded Title: \n {app.story.title} from {fname}"))
-        if not app.story.check_integrity():
-            errors = app.story.prune_dangling_choices()
+        self.app.story = Story.from_markdown_file(fname)
+        self.post_message(TextLogMessage(f"Loaded Title: \n {self.app.story.title} from {fname}"))
+        if not self.app.story.check_integrity():
+            errors = self.app.story.prune_dangling_choices()
             self.post_message(TextLogMessage("Pruned dangling choices: \n" + "\n".join(errors)))
         self.display_currentdialog()
         self.set_focus(self.query_one("#choices"))
-        self.app.title = app.story.title
-        self.query_one("#header").stats = f"{len(app.story.dialogs)} dialogues"
+        self.app.title = self.app.story.title
+        self.query_one("#header").stats = f"{len(self.app.story.dialogs)} dialogues"
 
     def display_currentdialog(self):
         """Update reactive variables, so current dialog is displayed."""
         """ Update the text. """
-        text = "# " + app.story.currentdialog.dialogid + "\n\n" + app.story.currentdialog.text
+        text = "# " + self.app.story.currentdialog.dialogid + "\n\n" + self.app.story.currentdialog.text
         md = self.query_one("Prompt")
         md.prompt = text
         """ Update the choices. """
-        self.query_one(Choices).choices = app.story.currentdialog.choices
+        self.query_one(Choices).choices = self.app.story.currentdialog.choices
 
 
 class FilteredDirectoryTree(DirectoryTree):
@@ -186,9 +191,6 @@ class FilteredDirectoryTree(DirectoryTree):
         ]
 
 
-from dataclasses import dataclass
-
-
 @dataclass
 class StoryItem:
     """A story item for the list view."""
@@ -203,6 +205,7 @@ def getfilelist(mypath: str, suffix: str, withpath: bool = False) -> list:
     """Find all files in folders and subfolders given a specific extension"""
     p = Path(mypath).glob("**/*." + suffix)
     l = [x for x in p if x.is_file()]
+    l = [x for x in l if not x.name.startswith(".")]
     if withpath == False:
         l = [f.name for f in l]
     return l
@@ -299,7 +302,7 @@ class LoadScreen(ModalScreen):
         yield Footer()
 
     def action_cancel(self):
-        app.pop_screen()
+        self.app.pop_screen()
 
     def on_mount(self) -> None:
         self.set_focus(self.query_one("#storylist"))
@@ -323,12 +326,12 @@ class LoadScreen(ModalScreen):
             self.set_focus(self.query_one("#storylist"))
 
     def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected) -> None:
-        app.push_screen("Story")
-        app.screen.load_story(Path(event.path))
+        self.app.push_screen("Story")
+        self.app.screen.load_story(Path(event.path))
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
-        app.push_screen("Story")
-        app.screen.load_story(Path(event.item.contents.fullpath))
+        self.app.push_screen("Story")
+        self.app.screen.load_story(Path(event.item.contents.fullpath))
 
 
 class GenerateOut(TextLog):
@@ -366,20 +369,20 @@ class GenerateScreen(ModalScreen):
         yield Footer()
 
     def action_menu(self):
-        app.push_screen("Start")
+        self.app.push_screen("Start")
 
     def action_cancel(self):
-        app.push_screen("Story")
+        self.app.push_screen("Story")
 
     def action_save(self):
-        app.push_screen("Save")
+        self.app.push_screen("Save")
 
     def on_mount(self) -> None:
         self.set_focus(self.query_one("#prompt"))
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
         # Avoid that the story generation is just restarted every time the user presses enter
-        for w in app.workers:
+        for w in self.app.workers:
             if w.name == "upd_gptout" and w.state == WorkerState.RUNNING:
                 return
         self.post_message(TextLogMessage(f"Input: {event.value}"))
@@ -388,15 +391,15 @@ class GenerateScreen(ModalScreen):
     @work(exclusive=True)
     async def upd_gptout(self, prompt: str = "A story about a pirate") -> None:
         # sg = StoryGenerator(prompt=prompt)
-        async for cur, _ in app.story.generate_story(prompt=prompt):
-            # async for cur, _ in app.story.generate_story_from_file(fname="./storytime_ai/templates/minimal.md"):
+        async for cur, _ in self.app.story.generate_story(prompt=prompt):
+            # async for cur, _ in self.app.story.generate_story_from_file(fname="./storytime_ai/templates/minimal.md"):
             self.query_one("#gptout").gptout = cur
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         self.post_message(TextLogMessage(f"Button pressed: {event.button.id}"))
         if event.button.id == "cancel":
             # Cancel the story generation
-            for w in app.workers:
+            for w in self.app.workers:
                 if w.name == "upd_gptout" and w.state == WorkerState.RUNNING:
                     w.cancel()
         elif event.button.id == "usestory":
@@ -404,8 +407,8 @@ class GenerateScreen(ModalScreen):
             st = Story.from_markdown(self.query_one("#gptout").gptout)
             st.markdown_file = Path("/tmp/story.md")
             st.save_markdown()
-            app.SCREENS["Story"].load_story(st.markdown_file)
-            app.push_screen("Story")
+            self.app.SCREENS["Story"].load_story(st.markdown_file)
+            self.app.push_screen("Story")
 
 
 class SaveScreen(ModalScreen):
@@ -436,7 +439,7 @@ class SaveScreen(ModalScreen):
             if fname == "":
                 self.post_message(TextLogMessage(f"Please enter a filename"))
                 return
-            st = app.story
+            st = self.app.story
             st.markdown_file = Path(fname)
             st.save_markdown()
             self.post_message(TextLogMessage(f"Saved to {fname}"))
@@ -451,7 +454,7 @@ class SaveScreen(ModalScreen):
 
     def action_cancel(self):
         """Return to the story screen."""
-        app.pop_screen()
+        self.app.pop_screen()
 
 
 class PropertiesTable(DataTable):
@@ -492,7 +495,7 @@ class PropertiesScreen(ModalScreen):
     def on_screen_resume(self) -> None:
         table = self.query_one("#propertytable")
         table.clear()
-        proptable = [(k, v) for k, v in app.story.properties.items()]
+        proptable = [(k, v) for k, v in self.app.story.properties.items()]
         if len(proptable) == 0:
             proptable = [("None", "None")]
         self.post_message(TextLogMessage(f"Properties: {proptable}"))
@@ -500,7 +503,7 @@ class PropertiesScreen(ModalScreen):
 
     def action_cancel(self):
         """Return to the story screen."""
-        app.push_screen("Story")
+        self.app.push_screen("Story")
 
 
 class MenuListView(ListView):
@@ -541,18 +544,18 @@ class StartScreen(Screen):
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         self.log(f"Selected: {event.item.id}")
         if event.item.id == "menu_load":
-            app.push_screen("Load")
+            self.app.push_screen("Load")
         elif event.item.id == "menu_generate":
-            app.push_screen("Generate")
+            self.app.push_screen("Generate")
         elif event.item.id == "menu_current":
-            app.push_screen("Story")
+            self.app.push_screen("Story")
         elif event.item.id == "menu_save":
-            app.push_screen("Save")
+            self.app.push_screen("Save")
         elif event.item.id == "menu_quit":
-            app.exit()
+            self.app.exit()
 
     def action_cancel(self):
-        app.pop_screen()
+        self.app.pop_screen()
 
 
 class Storytime(App):
@@ -564,15 +567,14 @@ class Storytime(App):
         "Properties": PropertiesScreen(),
         "Generate": GenerateScreen(),
     }
-    CSS_PATH = "./assets/app.css"
+    CSS_PATH = "templates/app.css"
 
     def on_mount(self) -> None:
         """Start all Screens"""
-        self.push_screen("Story")
         self.push_screen("Load")
         self.push_screen("Save")
         self.push_screen("Generate")
-        self.push_screen("Properties")
+        self.push_screen("Story")
         self.push_screen("Start")
 
     # The custom TextLogMessage event is handled here.
@@ -588,11 +590,7 @@ class Storytime(App):
             pass
 
 
-if __name__ == "__main__":
-    # if not __debug__:
-    #     print("WARNING: Running in debug mode with back button and log")
-    #     print("Start without -O to disable debug mode")
-    #     input("Press enter to continue")
+def startapp():
     if not _openai:
         print("WARNING: GPT-Story not found. Running without GPT-Story")
         print("Set environment variable OPENAI_API_KEY to enable GPT-Story (in .env file)")
@@ -604,3 +602,11 @@ if __name__ == "__main__":
             sys.exit(1)
     app = Storytime()
     app.run()
+
+
+if __name__ == "__main__":
+    # if not __debug__:
+    #     print("WARNING: Running in debug mode with back button and log")
+    #     print("Start without -O to disable debug mode")
+    #     input("Press enter to continue")
+    startapp()

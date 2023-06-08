@@ -1,114 +1,80 @@
-# Storytime! _storytime_ai_
+# Storytime!
 
-## View and create interactive stories in terminal _(web version planned)_
+## View and create interactive stories in terminal
 
-With storytime, you can create fun interactive stories in your terminal.
+With `storytime`, you can create fun interactive stories in your terminal.
 Just write a markdown file with your dialogues, choices and simple logic.
 An example file can be found in [`storytime_ai/templates/minimal.md`](storytime_ai/templates/minimal.md).
 You can also create a story with the built-in [openai](https://openai.com) integration.
 
+- A _web version_ is planned
+- _storytime_ai_ is the name of the python package
+
 ![screenshot](assets/readme.webp "Screenshot of Storytime")
 
-## Installation from github repository
+## Installation
 
-Clone the repository:
+- Install the latest version with `pip`:
 
-```
-git clone https://www.github.com/Dronakurl/storytime
-```
+  ```
+  pip install 'git+https://github.com/Dronakurl/storytime.git#egg=storytime_ai[extras]'
+  ```
 
-Install with [`poetry`](https://python-poetry.org/).
+- Set environment variable with openai api key (optional)
 
-```
-curl -sSL https://install.python-poetry.org | python3 -
-poetry install --all-extras
-```
+  To use the story generation with openai, you need to set the environment variable
+  `OPENAI_API_KEY` to your openai api key.
+  You can get your api key from the [openai settings](https://platform.openai.com/account/api-keys).
+  The environment variable can be set in a file `.env` in the root directory of this project.
 
-Poetry automatically sets the environment variable from a `.env` file using the poetry package `python-dotenv` which is installed with poetry.:
-
-```
-poetry self add poetry-dotenv-plugin
-```
+  ```[.env]
+  OPENAI_API_KEY="sk-p9GOXXXXX<Your OPENAI_API_KEY>"
+  ```
 
 ## Start the Storytime terminal app
 
 Run Storytime with:
 
 ```
-poetry run textual run app.py
+storytime [markdown_file with your own story]
 ```
 
-## Integration with openai
-
-To use the openai integration, you need to set the environment variable `OPENAI_API_KEY` to your openai api key.
-You can get your api key from the [openai settings](https://platform.openai.com/account/api-keys).
-The environment variable can be set in a file `.env` in the root directory of this project.
-```[.env]
-OPENAI_API_KEY="sk-p9GOXXXXX<Your OPENAI_API_KEY>"
-```
-
-## Check integrity of your own story
+### Helper script: Check integrity of your story
 
 You can check if your story is valid with the following command:
-`poetry run python -c "from storytime_ai import Story; Story.from_markdown_file('yourstory.md').check_integrity()"`
+
+```
+storytime-checker [markdown_file with your own story]
+```
+
 It will check if all the choices are valid and if all dialogues are connected.
 
-## Build storytime package (for developers)
+## Development
 
-In future versions, this package will be available on pypi. Here is how to build it, currently only on test.pypi.org, so no one is annoyed by this early version:
+See [test/README.md](test/README.md) for more information about the packaging.
+See the issues for planned features.
 
-I don't know why, but
+### Install storytime from github
 
-```
-poetry config http-basic.pypi <USER> <PASSWORD>
-```
+- Clone the repository:
 
-doesn't work for me, so you maybe have to do it manually.
-Set the file `~/.config/pypoetry/auth.toml` to the following content:
+  ```
+  git clone https://www.github.com/Dronakurl/storytime
+  ```
 
-```
-[http-basic.pypi]
-username = "<USER>"
-password = "<PASSWORD>"
-```
+- Install [`poetry`](https://python-poetry.org/) if you don't have it yet
 
-Then build and publish the package with:
+  ```
+  curl -sSL https://install.python-poetry.org | python3 -
+  ```
 
-```
-poetry build
-poetry config repositories.testpypi https://test.pypi.org/legacy/
-poetry publish --repository testpypi
-```
+- Install using poetry:
 
-Test the package with:
+  ```
+  poetry install --all-extras
+  ```
 
-```
-deactivate
-mkdir /tmp/test
-cd /tmp/test
-rm -rf venv
-python -m venv venv
-source venv/bin/activate
-pip install --index-url https://test.pypi.org/simple/ --no-deps storytime_ai
-python -c "from storytime_ai import Story; Story.from_markdown_file('/home/konrad/storytime/storytime_ai/templates/minimal.md').check_integrity()"
-python -c "from importlib.metadata import version; print(version('storytime_ai'))"
-deactivate
-rm -rf venv
-cd ~/storytime
-```
-
-## Install from github repository (developers only)
-```
-deactivate
-mkdir /tmp/test
-cd /tmp/test
-rm -rf venv
-python -m venv venv
-source venv/bin/activate
-pip install ~/storytime[extras]
-python -c "from storytime_ai import Story; Story.from_markdown_file('/home/konrad/storytime/storytime_ai/templates/minimal.md').check_integrity()"
-python -c "from importlib.metadata import version; print(version('storytime_ai'))"
-deactivate
-rm -rf venv
-cd ~/storytime
-```
+- Run tests:
+  ```
+  poetry run pytest
+  ```

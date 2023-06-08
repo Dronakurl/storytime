@@ -1,4 +1,3 @@
-from test.test_story import get_test_story
 from storytime_ai import Story
 import asyncio
 import pytest
