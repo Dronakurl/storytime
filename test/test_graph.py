@@ -2,7 +2,7 @@ from PIL import Image
 import numpy as np
 import pytest
 
-from story import story
+from storytime_ai import story
 from test.test_story import get_test_story
 
 
