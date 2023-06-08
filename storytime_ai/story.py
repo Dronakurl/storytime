@@ -11,8 +11,6 @@ from pathlib import Path
 import re
 import sys
 
-from dotenv import load_dotenv
-
 from .choice import Choice
 from .dialog import Dialog
 from .require_decorator import Requirement, requires
@@ -37,6 +35,8 @@ except ImportError:
     _openai = False
 else:
     _openai = True
+    from dotenv import load_dotenv
+
     load_dotenv()
     apikey = os.getenv("OPENAI_API_KEY")
     if apikey is None:
