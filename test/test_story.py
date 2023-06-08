@@ -1,4 +1,4 @@
-from story import Dialog, Choice, Story
+from storytime_ai import Dialog, Choice, Story
 import pytest
 import os
 
@@ -107,7 +107,7 @@ def test_back_dialog():
 
 
 def test_property_logic_minimal():
-    story = Story.from_markdown_file("./data/minimal.md")
+    story = Story.from_markdown_file("./storytime_ai/templates/minimal.md")
     assert story.properties["Health Points"] == 100
     story.next_dialog("Go left")
     assert story.properties["Health Points"] == 90
@@ -118,28 +118,29 @@ def test_property_logic_minimal():
 @pytest.mark.parametrize(
     "file",
     [
-        "./data/story.md",
-        "./data/minimal.md",
-        "./data/minimal2.md",
-        "./data/broken.md",
+        "./storytime_ai/templates/story.md",
+        "./storytime_ai/templates/minimal.md",
+        "./storytime_ai/templates/minimal2.md",
+        "./storytime_ai/templates/broken.md",
     ],
 )
 def test_from_markdown_file(file):
+    """Compare only non-empty lines"""
     story = Story.from_markdown_file(file)
     with open(file) as f:
         md = f.read().strip()
-    md = os.linesep.join([s for s in md.splitlines() if s])
+    md = os.linesep.join([s.strip() for s in md.splitlines() if s])
     sm = story.to_markdown()
-    sm = os.linesep.join([s for s in sm.splitlines() if s])
+    sm = os.linesep.join([s.strip() for s in sm.splitlines() if s])
     assert md == sm
 
 
 @pytest.mark.parametrize(
     "file",
     [
-        "./data/story.md",
-        "./data/minimal.md",
-        "./data/minimal2.md",
+        "./storytime_ai/templates/story.md",
+        "./storytime_ai/templates/minimal.md",
+        "./storytime_ai/templates/minimal2.md",
     ],
 )
 def test_integrity_of_minimal(file):
@@ -148,14 +149,14 @@ def test_integrity_of_minimal(file):
 
 
 def test_addchoice():
-    story = Story.from_markdown_file("./data/story.md")
+    story = Story.from_markdown_file("./storytime_ai/templates/story.md")
     story.addchoice("new text", "eins")
     assert story.currentdialog.choices["eins"].nextdialogid == "eins"
     assert story.currentdialog.choices["eins"].text == "new text"
 
 
 def test_integrity():
-    story = Story.from_markdown_file("./data/story.md")
+    story = Story.from_markdown_file("./storytime_ai/templates/story.md")
     assert story.check_integrity()
     story.addchoice("new text", "eins")
     assert not story.check_integrity()

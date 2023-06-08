@@ -13,7 +13,7 @@ from textual.screen import ModalScreen, Screen
 from textual.widgets import *
 from textual.worker import WorkerState
 
-from story import Choice, Story, _openai
+from storytime_ai import Choice, Story, _openai
 
 
 class TextLogMessage(Message):
@@ -109,7 +109,7 @@ class StoryInterface(Screen):
         if len(sys.argv) > 1:
             fname = Path(sys.argv[1])
         else:
-            fname = Path("./data/story.md")
+            fname = Path("./storytime_ai/templates/story.md")
         self.load_story(fname)
 
     def action_back(self):
@@ -389,7 +389,7 @@ class GenerateScreen(ModalScreen):
     async def upd_gptout(self, prompt: str = "A story about a pirate") -> None:
         # sg = StoryGenerator(prompt=prompt)
         async for cur, _ in app.story.generate_story(prompt=prompt):
-            # async for cur, _ in app.story.generate_story_from_file(fname="./data/minimal.md"):
+            # async for cur, _ in app.story.generate_story_from_file(fname="./storytime_ai/templates/minimal.md"):
             self.query_one("#gptout").gptout = cur
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

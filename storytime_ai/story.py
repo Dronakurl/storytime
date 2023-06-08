@@ -4,15 +4,17 @@ A Story is a collection of Dialogs.
 A Dialog contains a selection of Choices.
 The Story class is responsible for handling the Story with logic
 """
+import asyncio
+from importlib.resources import files
 import os
 from pathlib import Path
 import re
-import asyncio
+
+# import data
 
 from .choice import Choice
 from .dialog import Dialog
 from .require_decorator import Requirement, requires
-
 
 try:
     import networkx as nx
@@ -47,8 +49,7 @@ openai_req = Requirement("openai", _openai, "OpenAI API", raise_error=True)
 
 
 class Story:
-    with open("data/minimal.md", "r") as f:
-        storytemplate = f.read()
+    storytemplate = files("storytime_ai.templates").joinpath("minimal.md").read_text()
 
     defaultprompt = "Eine Geschichte über ein Kind, dass im Wald verloren geht"
 
@@ -241,6 +242,7 @@ class Story:
                 if choiceid not in self.dialogs:
                     print("Integrity check failed: Impossible choice: " + choiceid + " does not exist")
                     return False
+        print("Integrity check passed s")
         return True
 
     def prune_dangling_choices(self):
@@ -277,7 +279,7 @@ class Story:
             self.dialogs[dialogid].choices.pop(choiceid)
 
     @classmethod
-    async def generate_story_from_file(cls, fname: str = "data/story.md", sleep_time: float = 0.1):
+    async def generate_story_from_file(cls, fname: str = "./storytime_ai/templates/story.md", sleep_time: float = 0.1):
         """Generate a story from a file for testing purposes without using OpenAI.
         :param fname: The name of the file to read from.
         :returns: a generator that yields the state of the current story and the delta that was just added
