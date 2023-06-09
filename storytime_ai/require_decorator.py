@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import wraps
 
 
 @dataclass
@@ -12,6 +13,7 @@ class Requirement:
 
 def requires(*requirements: Requirement):
     def decorator(func):
+        @wraps(func)
         def wrapper(*args, **kwargs):
             if all([x.extra for x in requirements]):
                 return func(*args, **kwargs)

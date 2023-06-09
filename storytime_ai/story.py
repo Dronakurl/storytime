@@ -1,8 +1,17 @@
 """
+Story class
+===========
+
 This module contains the classes that represent a story.
 A Story is a collection of Dialogs.
 A Dialog contains a selection of Choices.
 The Story class is responsible for handling the Story with logic
+
+.. code-block:: python
+
+    from storytime_ai import Story
+    Story.from_markdown_file("storytime_ai/template/story.md")
+
 """
 import asyncio
 from importlib.resources import files
@@ -52,21 +61,50 @@ openai_req = Requirement("openai", _openai, "OpenAI API", raise_error=True)
 
 
 class Story:
+    """
+    A class used to represent a Story for navigation, generation and visualization.
+
+    Attributes
+    ----------
+    title : str
+        The title of the story
+    dialogs : dict[str, Dialog]
+        A dictionary of Dialog objects with the heading of each dialogue as key
+    currentdialog : str
+        Heading of the current dialog
+    prevdialogids : list[str]
+        List of headings of previous dialogs, provides a history of the story so far
+    markdown_file : str
+        Path to the markdown file where the story was loaded or saved
+    properties : dict[str, str]
+        A dictionary of properties that can be used in the logic of the story
+    G: networkx.Graph
+        A networkx graph of the story
+
+    """
+
     storytemplate = files("storytime_ai.templates").joinpath("minimal.md").read_text()
 
     defaultprompt = "Eine Geschichte über ein Kind, dass im Wald verloren geht"
 
     def __init__(self, dialogs: dict[str, Dialog], title: str = "Story"):
+        """
+        Parameters
+        ----------
+        dialogs : dict[str, Dialog]
+            A dictionary of Dialog objects with the heading of each dialogue as key
+        title : str, optional
+            The title of the story
+        """
+
+        self.title = title
         self.dialogs = dialogs
         self.currentdialog = self.dialogs[list(dialogs.keys())[0]]
         self.prevdialogids = [list(dialogs.keys())[0]]
-        self.title = title
         self.markdown_file = "story.md"
         self.properties = {}
         self.exec_logic()
         self.G = None
-        self.current_result = ""
-        self.delta = ""
 
     def __repr__(self):
         return self.to_markdown()
@@ -75,6 +113,14 @@ class Story:
         return self.to_markdown() == other.to_markdown()
 
     def next_dialog(self, nextdialogid: str):
+        """
+        Changes the current dialog to the one with the heading nextdialogid
+
+        Parameters
+        ----------
+        nextdialogid : str
+            The heading of the next dialog
+        """
         self.prevdialogids.append(self.currentdialog.dialogid)
         self.currentdialog = self.dialogs[nextdialogid]
         logmsg = self.currentdialog.logic
@@ -82,14 +128,18 @@ class Story:
         return logmsg
 
     def exec_logic(self):
+        """
+        Executes the logic of the current dialog
+
+        The logic is a string with keywords PROPERTY and NEXTDIALOG.
+        They are interpreted such that the properties are set and checked.
+        PROPERTY "name" = "value" sets the property "name" to "value".
+        NEXTDIALOG "heading" IF "condition" sets the next dialog to "heading" if "condition" is true.
+        """
         if len(self.currentdialog.logic) <= 1:
             return
-        # loop over lines of logic
+        # loop over lines of logic and interpret the keywords
         for strl in self.currentdialog.logic.split("\n"):
-            # # string code that sets the properties
-            # strl = "PROPERTY 'Property Key' = 'Property Value'"
-            # # string code that changes the current dialog based on the properties
-            # strl = "NEXTDIALOG 'Dialog ID' IF 'Property Key' == 'Property Value'"
             if strl.startswith("PROPERTY"):
                 x = re.search(r"PROPERTY [\"\'](.*)[\"\'] = (.*)", strl)
                 try:
@@ -113,9 +163,22 @@ class Story:
                     print(f"Error {e} in logic {strl}")
 
     def addchoice(self, text: str, nextdialogid: str):
+        """
+        Adds a choice to the current dialog
+
+        Parameters
+        ----------
+        text : str
+            The text of the choice
+        nextdialogid : str
+            The heading of the next dialog
+        """
         self.currentdialog.addchoice(text, nextdialogid)
 
     def back_dialog(self):
+        """
+        Changes the current dialog to the previous one, based on the history of visited dialogs
+        """
         print(self.prevdialogids)
         if len(self.prevdialogids) > 1:
             prvdiag = self.prevdialogids.pop()
@@ -124,12 +187,30 @@ class Story:
         self.currentdialog = self.dialogs[prvdiag]
 
     def save_markdown(self, fname: str = None):
+        """
+        Saves the story to a markdown file.
+
+        Parameters
+        ----------
+        fname : str, optional
+            The filename to save the story to.
+            If None, the filename in the property markdown_file is used.
+            If fname is given, the property markdown_file is set to fname.
+        """
         if fname is not None:
             self.markdown_file = fname
         with open(Path(self.markdown_file), "w") as f:
             f.write(self.to_markdown())
 
     def to_markdown(self):
+        """
+        Returns the story as a markdown string
+
+        Returns
+        -------
+        str
+            The story as a markdown string
+        """
         res = f"# {self.title}\n\n"
         res += "\n\n".join([self.dialogs[x].to_markdown() for x in self.dialogs])
         res = res.strip()
@@ -137,7 +218,20 @@ class Story:
 
     @classmethod
     def from_markdown(cls, markdown: str):
-        # Parse a string with markdown and return an Story object
+        """
+        Parse a string with markdown and return an Story object.
+        No integrity checks are performed with this method.
+
+        Parameters
+        ----------
+        markdown : str
+            The markdown string to parse
+
+        Returns
+        -------
+        Story
+            The story object
+        """
         lines = markdown.split("\n")
         dialogs = {}
         dialogid = ""
@@ -193,6 +287,20 @@ class Story:
 
     @classmethod
     def from_markdown_file(cls, fname: Path | str):
+        """
+        Parse a markdown file and return an Story object.
+        No integrity checks are performed with this method.
+
+        Parameters
+        ----------
+        fname : Path or str
+            The filename of the markdown file to parse
+
+        Returns
+        -------
+        Story
+            The story object
+        """
         if isinstance(fname, str):
             fname = Path(fname)
         if not fname.is_file():
@@ -206,7 +314,12 @@ class Story:
 
     @requires(networkx_req)
     def create_graph(self):
-        """Create a networkx graph of the story"""
+        """
+        Create a networkx graph of the story
+
+        Parameters
+        ----------
+        """
         self.G = nx.DiGraph()
         for dialogid in self.dialogs:
             self.G.add_node(dialogid)
@@ -222,6 +335,15 @@ class Story:
 
     @requires(matplotlib_req, networkx_req)
     def plot_graph(self, graphfname: str = None):
+        """
+        Plot the story as a graph. If a filename in `graphfname` is given, the graph is saved to that file.
+        Otherwise, the graph is shown in a window.
+
+        Parameters
+        ----------
+        graphfname : str, optional
+            The filename to save the graph to.
+        """
         self.create_graph()
         nx.draw(self.G, with_labels=True)
         if graphfname is not None:
@@ -231,11 +353,19 @@ class Story:
 
     @requires(networkx_req)
     def has_subgraphs(self):
+        """
+        Check if the story has multiple subgraphs, i.e. multiple stories that are not connected to 
+        each other by a dialog choice.
+        """
         self.create_graph()
         # check if there are subgraphs (i.e. multiple stories)
         return nx.number_weakly_connected_components(self.G) > 1
 
     def check_integrity(self):
+        """
+        Check the integrity of the story. This method checks if the story has multiple 
+        subgraphs and if all the choices are valid.
+        """
         if _graph and self.has_subgraphs():
             print("Integrity check failed: The story has multiple subgraphs")
             return False
@@ -249,7 +379,9 @@ class Story:
         return True
 
     def prune_dangling_choices(self):
-        # remove choices that point to a dialog that does not exist
+        """
+        Remove choices that point to a dialog that does not exist
+        """
         choices_to_remove = []
         for dialogid in self.dialogs:
             for choiceid in self.dialogs[dialogid].choices:
@@ -262,6 +394,10 @@ class Story:
 
     @requires(networkx_req)
     def restrict_to_largest_substory(self):
+        """
+        Restrict the story to the largest substory. This method removes all the dialogs and choices
+        that are not in the largest substory.
+        """
         if _graph and not self.has_subgraphs():
             return
         self.create_graph()
@@ -283,9 +419,22 @@ class Story:
 
     @classmethod
     async def generate_story_from_file(cls, fname: str = "./storytime_ai/templates/story.md", sleep_time: float = 0.1):
-        """Generate a story from a file for testing purposes without using OpenAI.
-        :param fname: The name of the file to read from.
-        :returns: a generator that yields the state of the current story and the delta that was just added
+        """
+        Generate a story from a file for testing purposes without using OpenAI.
+
+        Parameters
+        ----------
+        fname: str
+            The name of the file to read from.
+        sleep_time: float
+            The time to sleep between each line of the file in seconds
+
+        Yields
+        ------
+        current_result: str
+            The current result of the story 
+        delta: str
+            The string that was just added to the story
         """
         current_result = ""
         with open(fname, "r") as f:
@@ -298,10 +447,20 @@ class Story:
     @classmethod
     @requires(openai_req)
     async def generate_story(cls, prompt: str = "", **kwargs):
-        """Generate a story from a prompt.
-        :param kwargs: Keyword arguments to pass to chatgpt
-        :returns: a generator that yields the state of the current story and the delta that was just added
-                when stream is True, otherwise returns the full story
+        """
+        Generate a story from a prompt.
+
+        Parameters
+        ----------
+        kwargs: 
+            Keyword arguments to pass to chatgpt
+
+        Yields
+        ------
+        current_result: str
+            The current result of the story 
+        delta: str
+            The string that was just added to the story
         """
         if len(prompt) == 0:
             prompt = cls.defaultprompt
@@ -330,6 +489,12 @@ class Story:
 
 
 def checkintegrity():
+    """
+    Check the integrity of a story from a file. 
+
+    This method checks if the story has multiple subgraphs and if all the choices are valid.
+    This method is used to define a command line tool in the python package.
+    """
     if len(sys.argv) < 1:
         print("Please provide a filename")
         sys.exit(1)
