@@ -1,3 +1,4 @@
+"""A textual app for storytime_ai."""
 from dataclasses import dataclass
 from importlib.resources import files
 from pathlib import Path

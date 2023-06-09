@@ -7,8 +7,8 @@ Just write a markdown file with your dialogues, choices and simple logic.
 An example file can be found in [`storytime_ai/templates/minimal.md`](storytime_ai/templates/minimal.md).
 You can also create a story with the built-in [openai](https://openai.com) integration.
 
-- A _web version_ is planned
-- _storytime_ai_ is the name of the python package
+- A *web version* is planned
+- *storytime_ai* is the name of the python package
 
 ![screenshot](assets/readme.webp "Screenshot of Storytime")
 
