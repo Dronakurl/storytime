@@ -1,7 +1,6 @@
 # Storytime development
 
 This file provides some information for development of storytime.
-For a user guide, see [README.md](README.md).
 
 ## Installation of storytime_ai package from local repository
 

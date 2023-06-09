@@ -1,16 +1,8 @@
-Welcome to Storytime's documentation!
-=====================================
-
-With `storytime`, you can create fun interactive stories in your terminal. Just write a markdown file with your dialogues, choices and simple logic. An example file can be found in `minimal.md`_. You can also create a story with the built-in `openai` integration.
-
-.. _`minimal.md`: storytime_ai/templates/minimal.md
+.. include:: ../README.rst
+   :end-before: .. _marker
 
 Check out the :doc:`usage` section for further information, including
 how to :ref:`installation` the project.
-
-.. note::
-
-   This project is under active development.
 
 
 .. toctree::
@@ -19,6 +11,8 @@ how to :ref:`installation` the project.
 
    usage
    story
+   install_from_github
+   development
 
 
 Indices and tables
