@@ -16,3 +16,15 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+  - repo: local
+    hooks:
+      - id: sphinx
+        name: sphinx
+        # entry: poetry run sphinx-build docs docs/_build
+        entry: docs/precomm.sh
+        language: system
+  # - repo: https://github.com/python-poetry/poetry
+  #   rev: '3fbd794'  # add version here
+  #   hooks:
+  #     - id: poetry-check
+  #     - id: poetry-lock

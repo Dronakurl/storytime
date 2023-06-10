@@ -3,7 +3,7 @@ name = "storytime_ai"
 version = "0.2.0"
 description = "View and create interactive stories in terminal"
 authors = ["Dronakurl <konrad2710@gmail.com>"]
-readme = "README.md"
+readme = "README.rst"
 license = "GPL-3.0-or-later"
 keywords = ["interactive", "terminal", "textual", "game", "openai"]
 homepage = "https://github.com/Dronakurl/storytime/"
@@ -15,14 +15,6 @@ classifiers = [
     "Topic :: Games/Entertainment :: Role-Playing",
 ]
 
-[tool.setuptools]
-include-package-data = true
-
-[tool.setuptools.package-data]
-"storytime_ai.templates" = ["*.md"]
-
-[tool.setuptools.packages.find]
-namespaces = true  
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -39,6 +31,7 @@ textual = ["textual"]
 [tool.poetry.scripts]
 storytime = { callable = "storytime_ai:app.startapp", extras = ["textual"] }
 storytime-checker = { callable = "storytime_ai:story.checkintegrity" }
+storytime-cli = { callable = "storytime_ai:story.simpleplay" }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"
