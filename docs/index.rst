@@ -11,6 +11,7 @@ how to :ref:`installation` the project.
 
    usage
    story
+   dialog
    install_from_github
    development
 

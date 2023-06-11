@@ -76,6 +76,8 @@ class Story:
         List of headings of previous dialogs, provides a history of the story so far
     markdown_file : str
         Path to the markdown file where the story was loaded or saved
+    messages : list[dict[str, str]]
+        ChatGPT message history, will be modified by the methods, not only appended
     properties : dict[str, str]
         A dictionary of properties that can be used in the logic of the story
     G: networkx.Graph
@@ -102,6 +104,7 @@ class Story:
         self.currentdialog = self.dialogs[list(dialogs.keys())[0]]
         self.prevdialogids = [list(dialogs.keys())[0]]
         self.markdown_file = "story.md"
+        self.messages = []
         self.properties = {}
         self.exec_logic()
         self.G = None
@@ -121,7 +124,10 @@ class Story:
         nextdialogid : str
             The heading of the next dialog
         """
-        self.prevdialogids.append(self.currentdialog.dialogid)
+        if nextdialogid not in self.dialogs:
+            raise ValueError(f"Dialog {nextdialogid} not found")
+        if self.currentdialog.dialogid != self.prevdialogids[-1]:
+            self.prevdialogids.append(self.currentdialog.dialogid)
         self.currentdialog = self.dialogs[nextdialogid]
         logmsg = self.currentdialog.logic
         self.exec_logic()
@@ -155,12 +161,47 @@ class Story:
                     cond = x.group(2)
                     for key in self.properties:
                         cond = re.sub(f"[\"']{key}[\"']", f"properties['{key}']", cond)
-                        print(cond)
                     if eval(cond, {"__builtins__": None}, {"properties": self.properties}):
                         # self.currentdialog.choices = {x.group(1): Choice("Continue", x.group(1))}
                         self.next_dialog(x.group(1))
                 except Exception as e:
                     print(f"Error {e} in logic {strl}")
+
+    def simpleplay(self):
+        """
+        Play the story in the command line. No textual, just like Zork.
+        """
+        while True:
+            print("")
+            print("*****************************************************")
+            print(">>>>" + self.currentdialog.dialogid + "\n")
+            print(self.currentdialog.text)
+            print("*****************************************************")
+            print("")
+            if len(self.currentdialog.choices) == 0:
+                input("Press enter to end")
+                break
+            print(f"Choices:")
+            choices = dict(enumerate([(k, v) for (k, v) in self.currentdialog.choices.items()]))
+            for i, choice in choices.items():
+                print(f"[{i}] = {choice[0]}: {choice[1].text}")
+            choice = input("Choose: ")
+            invalid = False
+            if not choice.isdigit():
+                invalid = True
+            try:
+                choice = int(choice)
+            except ValueError:
+                invalid = True
+            if choice not in choices:
+                invalid = True
+            if invalid:
+                print("*****************************************************")
+                print(f"Invalid choice! Choose one of {list(choices.keys())}")
+                print("*****************************************************")
+                continue
+            self.continue_story(choices[choice][0], override_existing=False)
+            # self.next_dialog(choices[choice][0])
 
     def addchoice(self, text: str, nextdialogid: str):
         """
@@ -179,12 +220,35 @@ class Story:
         """
         Changes the current dialog to the previous one, based on the history of visited dialogs
         """
-        print(self.prevdialogids)
         if len(self.prevdialogids) > 1:
             prvdiag = self.prevdialogids.pop()
         else:
             prvdiag = self.prevdialogids[0]
         self.currentdialog = self.dialogs[prvdiag]
+
+    def markdown_from_history(self, historylen: int = -1, includelogic: bool = False):
+        """Returns the markdown of the history of visited dialogs
+
+        Parameters
+        ----------
+        historylen : int, optional
+            The number of dialogs to include in the history. If -1, all dialogs are included.
+
+        Returns
+        -------
+        str
+            The markdown of the history of visited dialogs. The Dialog.to_markdown() method is used to generate the markdown.
+        """
+        res = f"# {self.title}\n\n"
+        history = self.prevdialogids + [self.currentdialog.dialogid]
+        if historylen > 0:
+            history = history[-historylen:]
+        for diagid in history:
+            res += self.dialogs[diagid].to_markdown(includelogic=includelogic) + "\n"
+        if includelogic:
+            for p in self.properties:
+                res += f'LOGIC PROPERTY "{p}" = {self.properties[p]}\n'
+        return res.strip()
 
     def save_markdown(self, fname: str = None):
         """
@@ -354,7 +418,7 @@ class Story:
     @requires(networkx_req)
     def has_subgraphs(self):
         """
-        Check if the story has multiple subgraphs, i.e. multiple stories that are not connected to 
+        Check if the story has multiple subgraphs, i.e. multiple stories that are not connected to
         each other by a dialog choice.
         """
         self.create_graph()
@@ -363,7 +427,7 @@ class Story:
 
     def check_integrity(self):
         """
-        Check the integrity of the story. This method checks if the story has multiple 
+        Check the integrity of the story. This method checks if the story has multiple
         subgraphs and if all the choices are valid.
         """
         if _graph and self.has_subgraphs():
@@ -432,7 +496,7 @@ class Story:
         Yields
         ------
         current_result: str
-            The current result of the story 
+            The current result of the story
         delta: str
             The string that was just added to the story
         """
@@ -452,13 +516,13 @@ class Story:
 
         Parameters
         ----------
-        kwargs: 
+        kwargs:
             Keyword arguments to pass to chatgpt
 
         Yields
         ------
         current_result: str
-            The current result of the story 
+            The current result of the story
         delta: str
             The string that was just added to the story
         """
@@ -487,20 +551,101 @@ class Story:
             current_result += delta
             yield current_result, delta
 
+    @requires(openai_req)
+    def continue_story(self, nextdialogid: str, override_existing: bool = True, **kwargs):
+        """
+        Continue the story with openai starting with the current dialogue and the next choice.
 
-def checkintegrity():
-    """
-    Check the integrity of a story from a file. 
+        Parameters
+        ----------
+        nextdialogid: str
+            The heading of the next dialog
+        override_exists: bool
+            Whether to override the check if the dialog exists
+        kwargs:
+            Keyword arguments to pass to chatgpt
 
-    This method checks if the story has multiple subgraphs and if all the choices are valid.
-    This method is used to define a command line tool in the python package.
-    """
-    if len(sys.argv) < 1:
+        Yields
+        ------
+        current_result: str
+            The current result of the next dialogue
+        delta: str
+            The string that was just added to the story
+        """
+        print("Continuing story with openai")
+        if not override_existing and nextdialogid in self.dialogs:
+            self.next_dialog(nextdialogid)
+
+        storytemplate_without_logic = "\n".join([l for l in self.storytemplate.split("\n") if "LOGIC" not in l])
+        if len(self.messages) == 0:
+            # If there are no messages, we need to start with a system message
+            self.messages = [
+                {
+                    "role": "system",
+                    "content": "You are an author of a story for a text based role playing game. You use the structure of the following example to lead through the story. Each dialogue is identified with its heading. Each choice starts with a hyphen and the heading of the dialogue to which the choice leads. After a colon, the description of the choice starts. You write in the language given in the prompt. \n\n ```\n "
+                    + storytemplate_without_logic
+                    + "\n ```\n",
+                }
+            ]
+        self.messages.append(
+            {
+                "role": "user",
+                "content": f"The story so far is: \n\n ```\n {self.markdown_from_history(historylen=4)}\n ```\n\nThe user chose the option '{nextdialogid}'\n\n Write the next dialogue for this choice.",
+            }
+        )
+        # TODO : Include the next dialogue if it exists
+        # TODO : check if the outcome is valid
+
+        # append to the log file
+        # TODO : Change prompt log to a logging handler or make it configurable, optional
+        # labels: enhancement, good first issue
+        logmsg = "==========================================\n\n".join([str(x) for x in self.messages])
+        with open("openai.log", "a") as f:
+            f.write(f"**********************************************\n {logmsg}\n\n")
+
+        completion = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=self.messages,
+            stream=True,
+            **kwargs,
+        )
+        current_result = ""
+        for chunk in completion:
+            delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content")
+            if delta is None:
+                delta = ""
+            current_result += delta
+            print(delta, end="")
+            # yield current_result, delta
+
+        self.dialogs[nextdialogid] = Dialog(nextdialogid, current_result, {})
+        self.next_dialog(nextdialogid)
+
+
+def get_story():
+    """Helper function for the different command line tools."""
+    if len(sys.argv) <= 1:
         print("Please provide a filename")
         sys.exit(1)
     fname = Path(sys.argv[1])
     if not fname.is_file():
         print(f"File not found. Exiting. Given filename: {fname}")
         sys.exit(1)
-    story = Story.from_markdown_file(fname)
+    return Story.from_markdown_file(fname)
+
+
+def simpleplay():
+    """Play a story in the command line."""
+    story = get_story()
+    story.simpleplay()
+
+
+def checkintegrity():
+    """
+    Check the integrity of a story from a file.
+
+    This method checks if the story has multiple subgraphs and if all the choices are valid.
+    This method is used to define a command line tool in the python package.
+    """
+    story = get_story()
     story.check_integrity()

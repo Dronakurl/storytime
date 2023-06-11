@@ -3,6 +3,17 @@ import pytest
 import os
 
 
+def assert_only_non_empty_lines(a, b):
+    a = os.linesep.join([s.strip() for s in a.splitlines() if s])
+    b = os.linesep.join([s.strip() for s in b.splitlines() if s])
+    if a != b:
+        print("a:")
+        print(a)
+        print("b:")
+        print(b)
+    assert a == b
+
+
 def test_choice():
     choice = Choice("First line with Ü\nSecond line with #", "Next Dialogue ID")
     assert choice.to_markdown() == "- Next Dialogue ID: First line with Ü\nSecond line with #"
@@ -56,9 +67,65 @@ def get_test_story():
                 },
                 "NEXTDIALOG 'zwei' IF 'test' == 1",
             ),
-            "zwei": Dialog("zwei", "dritter text", {}),
+            "zwei": Dialog(
+                "zwei",
+                "dritter text",
+                {},
+            ),
         },
         "My Story",
+    )
+
+
+def get_simple_test_story():
+    return Story(
+        {
+            "Coole ID": Dialog(
+                "Coole ID",
+                "Text",
+                {
+                    "eins": Choice("zweiter text", "eins"),
+                    "zwei": Choice("dritter text", "zwei"),
+                },
+                "PROPERTY 'test' = 1",
+            ),
+            "eins": Dialog(
+                "eins",
+                "zweiter text",
+                {
+                    "drei": Choice("vierter text", "drei"),
+                },
+            ),
+            "zwei": Dialog(
+                "zwei",
+                "dritter text",
+                {},
+            ),
+        },
+        "My Story",
+    )
+
+
+def test_simple_markdown():
+    story = get_simple_test_story()
+    assert_only_non_empty_lines(
+        story.to_markdown(),
+        """# My Story
+## Coole ID
+LOGIC PROPERTY 'test' = 1
+
+Text
+- eins: zweiter text
+- zwei: dritter text
+
+## eins
+zweiter text
+- drei: vierter text
+
+## zwei
+dritter text
+
+""",
     )
 
 
@@ -96,9 +163,9 @@ def test_back_dialog():
     story.properties["test"] = 2
     story.next_dialog("eins")
     story.next_dialog("zwei")
-    assert len(story.prevdialogids) == 3
-    story.back_dialog()
     assert len(story.prevdialogids) == 2
+    story.back_dialog()
+    assert len(story.prevdialogids) == 1
     assert story.currentdialog == story.dialogs["eins"]
     story.back_dialog()
     assert story.currentdialog == story.dialogs["Coole IDß"]
@@ -129,10 +196,7 @@ def test_from_markdown_file(file):
     story = Story.from_markdown_file(file)
     with open(file) as f:
         md = f.read().strip()
-    md = os.linesep.join([s.strip() for s in md.splitlines() if s])
-    sm = story.to_markdown()
-    sm = os.linesep.join([s.strip() for s in sm.splitlines() if s])
-    assert md == sm
+    assert_only_non_empty_lines(md, story.to_markdown())
 
 
 @pytest.mark.parametrize(
@@ -162,3 +226,50 @@ def test_integrity():
     assert not story.check_integrity()
     story.prune_dangling_choices()
     assert story.check_integrity()
+
+
+def test_markdown_from_history():
+    story = get_simple_test_story()
+    story.next_dialog("eins")
+    assert_only_non_empty_lines(
+        story.markdown_from_history(includelogic=True),
+        """# My Story
+
+## Coole ID
+LOGIC PROPERTY 'test' = 1
+
+Text
+- eins: zweiter text
+- zwei: dritter text
+
+## eins
+zweiter text
+- drei: vierter text
+
+LOGIC PROPERTY "test" = 1
+""",
+    )
+    assert_only_non_empty_lines(
+        story.markdown_from_history(includelogic=False),
+        """# My Story
+
+## Coole ID
+
+Text
+- eins: zweiter text
+- zwei: dritter text
+
+## eins
+zweiter text
+- drei: vierter text
+""",
+    )
+    assert_only_non_empty_lines(
+        story.markdown_from_history(historylen=1, includelogic=False),
+        """# My Story
+
+## eins
+zweiter text
+- drei: vierter text
+""",
+    )

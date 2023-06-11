@@ -14,4 +14,4 @@ async def test_generate_from_file():
 #     async for _ , delta in Story.generate_story(prompt="You are a knight in the kingdom of Larion. "):
 #         print(delta,end="")
 
-asyncio.run(test_generate_from_file())
+# asyncio.run(test_generate_from_file())
