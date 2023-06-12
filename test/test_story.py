@@ -19,16 +19,20 @@ def test_choice():
     assert choice.to_markdown() == "- Next Dialogue ID: First line with Ü\nSecond line with #"
 
 
-def test_dialog():
-    dialog = Dialog(
+def get_test_dialog():
+    return Dialog(
         "Coole IDß",
-        "Text in Unicode\n\n# Heading",
+        "Text in Unicode\n\n### Heading",
         {
             "eins": Choice("zweiter text", "eins"),
             "zwei": Choice("dritter text", "zwei"),
         },
         "PROPERTY test = 1",
     )
+
+
+def test_dialog():
+    dialog = get_test_dialog()
     assert (
         dialog.to_markdown()
         == """## Coole IDß
@@ -36,11 +40,17 @@ LOGIC PROPERTY test = 1
 
 Text in Unicode
 
-# Heading
+### Heading
 - eins: zweiter text
 
 - zwei: dritter text"""
     )
+
+
+def test_dialog_markdown_parser():
+    dialog = get_test_dialog()
+    dialog_parsed = Dialog.from_markdown(dialog.to_markdown())
+    assert dialog_parsed == dialog
 
 
 def get_test_story():

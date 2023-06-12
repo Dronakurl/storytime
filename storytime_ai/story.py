@@ -113,7 +113,15 @@ class Story:
         return self.to_markdown()
 
     def __eq__(self, other):
-        return self.to_markdown() == other.to_markdown()
+        """Equal operator for the Story object.
+
+        Empty lines are ignored and leading and trailing spaces are removed.
+        """
+        a = self.to_markdown()
+        b = other.to_markdown()
+        a = os.linesep.join([s.strip() for s in a.splitlines() if s])
+        b = os.linesep.join([s.strip() for s in b.splitlines() if s])
+        return a == b
 
     def next_dialog(self, nextdialogid: str):
         """
@@ -167,7 +175,7 @@ class Story:
                 except Exception as e:
                     print(f"Error {e} in logic {strl}")
 
-    def simpleplay(self):
+    async def simpleplay(self):
         """
         Play the story in the command line. No textual, just like Zork.
         """
@@ -200,7 +208,9 @@ class Story:
                 print(f"Invalid choice! Choose one of {list(choices.keys())}")
                 print("*****************************************************")
                 continue
-            self.continue_story(choices[choice][0], override_existing=False)
+            async for _, delta in self.continue_story(choices[choice][0], override_existing=False):
+                print(delta, end="")
+
             # self.next_dialog(choices[choice][0])
 
     def addchoice(self, text: str, nextdialogid: str):
@@ -552,7 +562,7 @@ class Story:
             yield current_result, delta
 
     @requires(openai_req)
-    def continue_story(self, nextdialogid: str, override_existing: bool = True, **kwargs):
+    async def continue_story(self, nextdialogid: str, override_existing: bool = True, **kwargs):
         """
         Continue the story with openai starting with the current dialogue and the next choice.
 
@@ -572,9 +582,10 @@ class Story:
         delta: str
             The string that was just added to the story
         """
-        print("Continuing story with openai")
+        # breakpoint()
         if not override_existing and nextdialogid in self.dialogs:
             self.next_dialog(nextdialogid)
+            return
 
         storytemplate_without_logic = "\n".join([l for l in self.storytemplate.split("\n") if "LOGIC" not in l])
         if len(self.messages) == 0:
@@ -590,7 +601,7 @@ class Story:
         self.messages.append(
             {
                 "role": "user",
-                "content": f"The story so far is: \n\n ```\n {self.markdown_from_history(historylen=4)}\n ```\n\nThe user chose the option '{nextdialogid}'\n\n Write the next dialogue for this choice.",
+                "content": f"The story so far is: \n\n ```\n {self.markdown_from_history(historylen=4)}\n ```\n\nThe user chose the option '{nextdialogid}'\n\n Write the next dialogue for this choice. The heading is '{nextdialogid}'",
             }
         )
         # TODO : Include the next dialogue if it exists
@@ -603,22 +614,24 @@ class Story:
         with open("openai.log", "a") as f:
             f.write(f"**********************************************\n {logmsg}\n\n")
 
-        completion = openai.ChatCompletion.create(
+        completion = openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo",
             messages=self.messages,
             stream=True,
             **kwargs,
         )
         current_result = ""
-        for chunk in completion:
+        async for chunk in await completion:
             delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content")
             if delta is None:
                 delta = ""
             current_result += delta
-            print(delta, end="")
-            # yield current_result, delta
+            yield current_result, delta
 
-        self.dialogs[nextdialogid] = Dialog(nextdialogid, current_result, {})
+        generated_dialog = Dialog.from_markdown(current_result)
+        if generated_dialog.dialogid != nextdialogid:
+            generated_dialog.dialogid = nextdialogid
+        self.dialogs[nextdialogid] = generated_dialog
         self.next_dialog(nextdialogid)
 
 
@@ -637,7 +650,7 @@ def get_story():
 def simpleplay():
     """Play a story in the command line."""
     story = get_story()
-    story.simpleplay()
+    asyncio.run(story.simpleplay())
 
 
 def checkintegrity():
