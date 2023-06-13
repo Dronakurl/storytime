@@ -93,6 +93,10 @@ class Dialog:
         markdown : str
             The markdown string to parse.
         """
+        # Use only the last heading as dialogid
+        markdown = markdown.split("\n## ")[-1]
+        if not markdown.startswith("## "):
+            markdown = "## " + markdown
         lines = markdown.split("\n")
         dialogid = ""
         text = ""
@@ -108,7 +112,7 @@ class Dialog:
                 pass
             elif line.startswith("## "):
                 if dialogid != "":
-                    print("WARNING: multiple dialog ids found in markdown string. Only the first one is used.")
+                    print("WARNING: multiple dialog ids found in markdown string.")
                     break
                 dialogid = line[3:].strip()
             elif line.startswith("LOGIC "):
