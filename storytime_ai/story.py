@@ -601,15 +601,13 @@ class Story:
         self.messages.append(
             {
                 "role": "user",
-                "content": f"The story so far is: \n\n ```\n {self.markdown_from_history(historylen=4)}\n ```\n\nThe user chose the option '{nextdialogid}'\n\n Write the next dialogue for this choice. The heading is '{nextdialogid}'",
+                "content": f"The story so far is: \n\n ```\n {self.markdown_from_history(historylen=4)}\n ```\n\nThe user chose the option '{nextdialogid}'\n\n Write the next dialogue for this choice. The heading is '{nextdialogid}'. Include at least one choice.",
             }
         )
-        # TODO : Include the next dialogue if it exists
-        # TODO : check if the outcome is valid
+        # TODO: Include the next dialogue if it exists
+        # TODO: check if the outcome is valid
 
-        # append to the log file
-        # TODO : Change prompt log to a logging handler or make it configurable, optional
-        # labels: enhancement, good first issue
+        # TODO: Change prompt log to a logging handler or make it configurable, optional
         logmsg = "==========================================\n\n".join([str(x) for x in self.messages])
         with open("openai.log", "a") as f:
             f.write(f"**********************************************\n {logmsg}\n\n")
