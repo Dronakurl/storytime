@@ -3,9 +3,10 @@ from dataclasses import dataclass
 from importlib.resources import files
 from pathlib import Path
 import sys
+import re
 from typing import ClassVar, Iterable
 
-from textual import work
+from textual import work, events
 from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingType
 from textual.containers import Container, Horizontal, Vertical
@@ -31,7 +32,8 @@ class TextLogMessage(Message):
 class Prompt(Markdown):
     prompt = reactive("Prompt")
 
-    def watch_prompt(self, prompt):
+    async def watch_prompt(self, prompt):
+        # await self.clear()
         self.update(prompt)
 
 
@@ -42,9 +44,11 @@ class Choices(ListView):
         Binding("l", "select_cursor", "Select", show=False),
     ]
     choices = reactive(dict(choice1=Choice("Choice 1", "initial")))
+    choicestr = reactive("")
 
-    async def watch_choices(self, choices):
-        await self.clear()
+    def watch_choices(self, choices):
+        self.clear()
+        print(choices)
         for nextdialogid, content in choices.items():
             self.append(
                 ListItem(
@@ -52,6 +56,10 @@ class Choices(ListView):
                     id="choice" + nextdialogid,
                 )
             )
+
+    def watch_choicestr(self, choicestr):
+        print(choicestr)
+        self.watch_choices(self.choices)
 
 
 class MyHeader(Static):
@@ -78,7 +86,8 @@ class StoryInterface(Screen):
         ("q", "quit", "Quit"),
         ("m", "menu_screen", "Menu"),
         ("p", "properties_screen", "Properties"),
-        *([("g", "generate_screen", "Generate")] if _openai else []),
+        ("a", "add_choice", "Add Choice"),
+        # *([("g", "generate_screen", "Generate")] if _openai else []),
         *(
             [
                 ("h", "back", "Back"),
@@ -91,20 +100,26 @@ class StoryInterface(Screen):
 
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
-        # yield Header()
         yield MyHeader(id="header")
-        yield Container(
-            Prompt(id="text"),
+        yield Horizontal(
+            Vertical(
+                Prompt(id="text"),
+                Choices(id="choices"),
+            ),
             TextLog(highlight=True, markup=True, wrap=True, id="log"),
-            Container(Choices(id="choices"), id="choicecontainer"),
-            id="layout",
         )
         yield Footer()
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
-        self.post_message(TextLogMessage(f"Selected: {event.item.id[6:]}"))
-        logmsg = self.app.story.next_dialog(event.item.id[6:])
-        self.post_message(TextLogMessage(f"Logic: {logmsg}"))
+        """The next dialog is selected."""
+        nextdialogid = event.item.id[6:]
+        self.post_message(TextLogMessage(f"Selected: {nextdialogid}"))
+        self.upd_text(nextdialogid)
+
+    @work(exclusive=True)
+    async def upd_text(self, nextdialogid: str) -> None:
+        async for currentresult, _ in self.app.story.continue_story(nextdialogid, override_existing=False):
+            self.query_one("#text").update(currentresult)
         self.display_currentdialog()
 
     def on_mount(self) -> None:
@@ -138,15 +153,15 @@ class StoryInterface(Screen):
     def action_generate_screen(self):
         self.app.push_screen("Generate")
 
+    def action_add_choice(self):
+        self.app.push_screen("Add Choice")
+        self.app.SCREENS["Add Choice"].query_one("#prompt").value = ""
+
     def action_toggle_log(self):
         if self.query_one("#log").styles.display == "none":
-            self.query_one(TextLog).styles.display = "block"
-            self.query_one("#text").styles.column_span = 2
-            self.query_one("#choicecontainer").styles.column_span = 2
+            self.query_one("#log").styles.display = "block"
         else:
             self.query_one("#log").styles.display = "none"
-            self.query_one("#text").styles.column_span = 3
-            self.query_one("#choicecontainer").styles.column_span = 3
 
     def load_story(self, fname: Path):
         """Load the story from a file."""
@@ -154,7 +169,7 @@ class StoryInterface(Screen):
             raise FileNotFoundError
         self.app.story = Story.from_markdown_file(fname)
         self.post_message(TextLogMessage(f"Loaded Title: \n {self.app.story.title} from {fname}"))
-        if not self.app.story.check_integrity():
+        if not self.app.story.check_integrity() and not _openai:
             errors = self.app.story.prune_dangling_choices()
             self.post_message(TextLogMessage("Pruned dangling choices: \n" + "\n".join(errors)))
         self.display_currentdialog()
@@ -164,12 +179,13 @@ class StoryInterface(Screen):
 
     def display_currentdialog(self):
         """Update reactive variables, so current dialog is displayed."""
-        """ Update the text. """
-        text = "# " + self.app.story.currentdialog.dialogid + "\n\n" + self.app.story.currentdialog.text
+        # Update the text.
+        text = "## " + self.app.story.currentdialog.dialogid + "\n\n" + self.app.story.currentdialog.text
         md = self.query_one("Prompt")
         md.prompt = text
-        """ Update the choices. """
+        # Update the choices.
         self.query_one(Choices).choices = self.app.story.currentdialog.choices
+        self.query_one(Choices).choicestr = self.app.story.currentdialog.choices_to_markdown()
 
 
 class FilteredDirectoryTree(DirectoryTree):
@@ -381,7 +397,7 @@ class GenerateScreen(ModalScreen):
     def on_mount(self) -> None:
         self.set_focus(self.query_one("#prompt"))
 
-    async def on_input_submitted(self, event: Input.Submitted) -> None:
+    def on_input_submitted(self, event: Input.Submitted) -> None:
         # Avoid that the story generation is just restarted every time the user presses enter
         for w in self.app.workers:
             if w.name == "upd_gptout" and w.state == WorkerState.RUNNING:
@@ -410,6 +426,49 @@ class GenerateScreen(ModalScreen):
             st.save_markdown()
             self.app.SCREENS["Story"].load_story(st.markdown_file)
             self.app.push_screen("Story")
+
+
+class AddChoiceScreen(ModalScreen):
+    BINDINGS: ClassVar[list[BindingType]] = [
+        ("q", "quit", "Quit"),
+        ("m", "menu", "Menu"),
+        ("c", "cancel", "Cancel"),
+    ]
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield Vertical(
+            Label("Next dialog", classes="titlelabel"),
+            Input("", id="prompt", placeholder="Enter a next choice (header: description) and press ENTER"),
+            classes="addchoicecontainer",
+        )
+        yield Footer()
+
+    def action_menu(self):
+        self.app.push_screen("Start")
+
+    def action_cancel(self):
+        self.app.push_screen("Story")
+
+    def action_save(self):
+        self.app.push_screen("Save")
+
+    def on_mount(self) -> None:
+        self.set_focus(self.query_one("#prompt"))
+
+    def on_key(self, event: events.Key) -> None:
+        if event.key == "escape":
+            self.app.push_screen("Story")
+
+    async def on_input_submitted(self, event: Input.Submitted) -> None:
+        x = re.search(r"(.+): (.+)", event.value)
+        if not x:
+            text = description = event.value
+        else:
+            description, text = x.groups()
+        self.app.story.addchoice(text, description)
+        self.app.SCREENS["Story"].display_currentdialog()
+        self.app.push_screen("Story")
 
 
 class SaveScreen(ModalScreen):
@@ -567,12 +626,14 @@ class Storytime(App):
         "Save": SaveScreen(),
         "Properties": PropertiesScreen(),
         "Generate": GenerateScreen(),
+        "Add Choice": AddChoiceScreen(),
     }
     CSS_PATH = "templates/app.css"
 
     def on_mount(self) -> None:
         """Start all Screens"""
         self.push_screen("Load")
+        self.push_screen("Add Choice")
         self.push_screen("Save")
         self.push_screen("Generate")
         self.push_screen("Story")
