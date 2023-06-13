@@ -208,7 +208,7 @@ class Story:
                 print(f"Invalid choice! Choose one of {list(choices.keys())}")
                 print("*****************************************************")
                 continue
-            async for _, delta in self.continue_story(choices[choice][0], override_existing=False):
+            async for _, delta in self.continue_story(choices[choice][0], choices[choice][1], override_existing=False):
                 print(delta, end="")
 
             # self.next_dialog(choices[choice][0])
@@ -582,10 +582,15 @@ class Story:
         delta: str
             The string that was just added to the story
         """
-        # breakpoint()
         if not override_existing and nextdialogid in self.dialogs:
             self.next_dialog(nextdialogid)
             return
+
+        next_text = self.currentdialog.choices[nextdialogid].text
+        if next_text.strip() == nextdialogid.strip():
+            next_text = ""
+        if len(next_text) > 0:
+            next_text = ": " + next_text
 
         storytemplate_without_logic = "\n".join([l for l in self.storytemplate.split("\n") if "LOGIC" not in l])
         if len(self.messages) == 0:
@@ -601,20 +606,26 @@ class Story:
         self.messages.append(
             {
                 "role": "user",
-                "content": f"The story so far is: \n\n ```\n {self.markdown_from_history(historylen=4)}\n ```\n\nThe user chose the option '{nextdialogid}'\n\n Write the next dialogue for this choice. The heading is '{nextdialogid}'. Include at least one choice.",
+                "content": f"The story so far is: \n\n ```\n {self.markdown_from_history(historylen=4)}\n ```",
             }
         )
-        # TODO: Include the next dialogue if it exists
+        self.messages.append(
+            {
+                "role": "user",
+                "content": f"The user chose the option '{nextdialogid} {next_text}'\n Write the next dialogue for this choice with the heading '{nextdialogid}'",
+            }
+        )
+        sendmessages = [self.messages[0]] + self.messages[-2:]
         # TODO: check if the outcome is valid
 
         # TODO: Change prompt log to a logging handler or make it configurable, optional
-        logmsg = "==========================================\n\n".join([str(x) for x in self.messages])
+        logmsg = "\n==========================================\n\n".join([str(x) for x in sendmessages])
         with open("openai.log", "a") as f:
-            f.write(f"**********************************************\n {logmsg}\n\n")
+            f.write(f"\n **********************************************\n {logmsg}\n\n")
 
         completion = openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo",
-            messages=self.messages,
+            messages=sendmessages,
             stream=True,
             **kwargs,
         )
