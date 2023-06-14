@@ -36,7 +36,7 @@ How to install
 
    .. code-block:: console
 
-      pip install 'git+https://github.com/Dronakurl/storytime.git@0.2.0#egg=storytime_ai[extras]'
+      pip install 'git+https://github.com/Dronakurl/storytime.git@0.2.1#egg=storytime_ai[extras]'
 
 - Set environment variable with openai api key (optional)
 
