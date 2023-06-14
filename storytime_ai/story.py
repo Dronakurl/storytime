@@ -619,7 +619,7 @@ class Story:
         # TODO: check if the outcome is valid
 
         # TODO: Change prompt log to a logging handler or make it configurable, optional
-        logmsg = "\n==========================================\n\n".join([str(x) for x in sendmessages])
+        logmsg = "\n==========================================\n\n".join([x.get("content") for x in sendmessages])
         with open("openai.log", "a") as f:
             f.write(f"\n **********************************************\n {logmsg}\n\n")
 
