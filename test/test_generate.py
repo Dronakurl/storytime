@@ -1,5 +1,5 @@
 from storytime_ai import Story
-import asyncio
+import asyncio  # pyright: ignore
 import pytest
 
 

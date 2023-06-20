@@ -1,8 +1,8 @@
 Storytime!
 ==========
 
-View and create interactive stories in terminal
-------------------------------------------------
+View and create interactive stories
+-----------------------------------
 
 With `storytime`, you can create fun interactive stories in your terminal. Just write a markdown file with your dialogues, choices and simple logic. An example file can be found in `minimal.md`_. You can also create a story with the built-in `openai` integration.
 
@@ -10,33 +10,33 @@ With `storytime`, you can create fun interactive stories in your terminal. Just 
 
 .. note::
 
-    - This project is under active development.
-    - A *web version* is planned
     - *storytime_ai* is the name of the python package
     - Documentation hat `dronakurl.github.io/storytime/`_
 
 .. _`dronakurl.github.io/storytime/`: https://dronakurl.github.io/storytime/
-.. _marker: 
+.. _marker 
 
+.. image:: assets/screenshot.webp
+   :alt: Screenshot of Storytime Web App
+   :align: center
+   
 .. image:: assets/readme.webp
-   :alt: Screenshot of Storytime
+   :alt: Screenshot of Storytime Terminal User Interface
    :align: center
 
-.. include:: ./docs/usage.rst
+.. _usage_marker
 
 Usage
 =====
 
-.. _installation:
-
 How to install 
 --------------
 
-- Install the latest release version with `pip`
+- Install the latest version with `pip`
 
    .. code-block:: console
 
-      pip install 'git+https://github.com/Dronakurl/storytime.git@0.2.1#egg=storytime_ai[extras]'
+      pip install 'git+https://github.com/Dronakurl/storytime.git#egg=storytime_ai[extras]'
 
 - Set environment variable with openai api key (optional)
 
@@ -48,14 +48,34 @@ How to install
 
       OPENAI_API_KEY="sk-p9GOXXXXX<Your OPENAI_API_KEY>"
 
-Start the Storytime terminal app
---------------------------------
+Start the Storytime web app
+---------------------------
 
 Run Storytime with
 
    .. code-block:: console
       
       storytime [markdown_file with your own story]
+
+This will start a webserver on port 8501. You can access the webapp with your browser at `http://localhost:8501`.
+The webserver runs with `streamlit`_.
+
+.. _`streamlit`: https://streamlit.io/
+
+Storytime loves the command line
+--------------------------------
+
+You can also use storytime from the command line. You can use the following commands:
+
+    .. code-block:: console
+
+       storytime-cli [markdown_file with your own story]
+       storytime-tui [markdown_file with your own story]
+      
+The `storytime-cli` command will start a very simple command line interface. 
+The `storytime-tui` command will start a terminal user interface made with `Textual`_.
+
+.. _`Textual`: https://textual.textualize.io/
 
 Helper script: Check integrity of your story
 --------------------------------------------

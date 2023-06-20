@@ -20,7 +20,6 @@ repos:
     hooks:
       - id: sphinx
         name: sphinx
-        # entry: poetry run sphinx-build docs docs/_build
         entry: docs/precomm.sh
         language: system
   # - repo: https://github.com/python-poetry/poetry
