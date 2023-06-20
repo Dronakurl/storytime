@@ -9,7 +9,7 @@ from typing import ClassVar, Iterable
 from textual import work, events
 from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingType
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import Horizontal, Vertical
 from textual.css.query import NoMatches
 from textual.message import Message
 from textual.reactive import reactive
@@ -19,6 +19,7 @@ from textual.worker import WorkerState
 
 from storytime_ai.choice import Choice
 from storytime_ai.story import Story, _openai
+from storytime_ai.utils import getfilelist
 
 
 class TextLogMessage(Message):
@@ -30,6 +31,8 @@ class TextLogMessage(Message):
 
 
 class Prompt(Markdown):
+    """A widget to display the current dialog text."""
+
     prompt = reactive("Prompt")
 
     async def watch_prompt(self, prompt):
@@ -216,16 +219,6 @@ class StoryItem:
     filename: str
     stats: str
     fullpath: Path
-
-
-def getfilelist(mypath: str, suffix: str, withpath: bool = False) -> list:
-    """Find all files in folders and subfolders given a specific extension"""
-    p = Path(mypath).glob("**/*." + suffix)
-    l = [x for x in p if x.is_file()]
-    l = [x for x in l if not x.name.startswith(".")]
-    if withpath == False:
-        l = [f.name for f in l]
-    return l
 
 
 class StoryListItem(ListItem):

@@ -1,0 +1,7 @@
+runtime: custom
+env: flex
+entrypoint: streamlit run storytime_ai/webapp.py –server.port=8080 –server.address=0.0.0.0
+
+runtime_config:
+    operating_system: "ubuntu22"
+    runtime_version: "3.11"

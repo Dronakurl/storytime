@@ -139,6 +139,32 @@ dritter text
     )
 
 
+def test_secrets():
+    story = get_simple_test_story()
+    story.secretsummary = "This is a secret summary\n### Heading"
+    assert_only_non_empty_lines(
+        story.to_markdown(),
+        """# My Story
+SECRET This is a secret summary
+SECRET ### Heading
+## Coole ID
+LOGIC PROPERTY 'test' = 1
+
+Text
+- eins: zweiter text
+- zwei: dritter text
+
+## eins
+zweiter text
+- drei: vierter text
+
+## zwei
+dritter text
+
+""",
+    )
+
+
 def test_story_error(capsys):
     # test if errors in the logic are printed
     get_test_story()

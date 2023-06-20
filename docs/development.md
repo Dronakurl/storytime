@@ -17,13 +17,15 @@ deactivate; rm -rf venv;
 
 ```
 
-## Installation of storytime_ai package from github repository
+## Installation of storytime_ai package from github repository  
+
+The @0.2.1 installs a specfic tag.
 
 ```
 deactivate; rm -fr /tmp/test/venv; mkdir /tmp/test; cd /tmp/test; rm -rf venv
 python -m venv venv; source venv/bin/activate
 
-pip install 'git+https://github.com/Dronakurl/storytime.git@0.2.0#egg=storytime_ai[extras]'
+pip install 'git+https://github.com/Dronakurl/storytime.git@0.2.1#egg=storytime_ai[extras]'
 
 python -c "from storytime_ai import Story; Story.from_markdown_file('/home/konrad/storytime/storytime_ai/templates/minimal.md').check_integrity()"
 python -c "from importlib.metadata import version; print(version('storytime_ai'))"

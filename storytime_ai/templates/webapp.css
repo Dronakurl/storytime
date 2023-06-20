@@ -1,0 +1,73 @@
+/* Top space */
+.css-1544g2n {
+  padding-top: 1rem;
+}
+.block-container {
+  padding-top: 4rem;
+}
+
+/* Change the Upload button */
+.css-9ycgxx,
+.css-7oyrr6 {
+  display: none;
+}
+.css-w770g5 {
+  width: 100%;
+}
+.css-fhd5bg {
+  padding: 0px;
+  margin: 0px;
+}
+.css-u8hs99 {
+  display: none;
+}
+.css-w770g5::before {
+  content: "Upload story - ";
+  white-space: pre;
+}
+.css-q8sbsg p {
+  font-size: 16px;
+}
+.uploadedFile {
+  display: none;
+}
+.css-fis6aj {
+  padding: 0px;
+}
+
+/* Hide the link button */
+.stApp a:first-child {
+  display: none;
+}
+
+/* Hide the menu */
+div[data-testid="stToolbar"] {
+  display: none;
+}
+section[aria-label="Upload a story"] {
+  padding:0px;
+}
+.css-15zrgzn {
+  display: none;
+}
+.css-eczf16 {
+  display: none;
+}
+.css-jn99sy {
+  display: none;
+}
+
+/* Hide the footer Made with */
+footer {
+  display: none;
+}
+header,
+.css-1avcm0n {
+  display: none;
+}
+
+/* Make the expander smaller */
+.streamlit-expanderHeader {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}

@@ -80,6 +80,8 @@ class Story:
         ChatGPT message history, will be modified by the methods, not only appended
     properties : dict[str, str]
         A dictionary of properties that can be used in the logic of the story
+    secretsummary: str
+        A secret summary of the story, not shown in the dialogs
     G: networkx.Graph
         A networkx graph of the story
 
@@ -89,7 +91,7 @@ class Story:
 
     defaultprompt = "Eine Geschichte über ein Kind, dass im Wald verloren geht"
 
-    def __init__(self, dialogs: dict[str, Dialog], title: str = "Story"):
+    def __init__(self, dialogs: dict[str, Dialog], title: str = "Story", secretsummary: str = ""):
         """
         Parameters
         ----------
@@ -101,6 +103,7 @@ class Story:
 
         self.title = title
         self.dialogs = dialogs
+        self.secretsummary = secretsummary
         self.currentdialog = self.dialogs[list(dialogs.keys())[0]]
         self.prevdialogids = [list(dialogs.keys())[0]]
         self.markdown_file = "story.md"
@@ -131,6 +134,11 @@ class Story:
         ----------
         nextdialogid : str
             The heading of the next dialog
+
+        Raises
+        ------
+        ValueError
+            If the nextdialogid is not found in the story
         """
         if nextdialogid not in self.dialogs:
             raise ValueError(f"Dialog {nextdialogid} not found")
@@ -243,6 +251,9 @@ class Story:
         ----------
         historylen : int, optional
             The number of dialogs to include in the history. If -1, all dialogs are included.
+        includelogic : bool, optional
+            If True, the logic of the dialogs is included in the markdown
+            and the current values of the properties are included.
 
         Returns
         -------
@@ -259,6 +270,27 @@ class Story:
             for p in self.properties:
                 res += f'LOGIC PROPERTY "{p}" = {self.properties[p]}\n'
         return res.strip()
+
+    def list_from_history(self, historylen: int = -1):
+        """Returns the list of the history of visited dialogs
+
+        Parameters
+        ----------
+        historylen : int, optional
+            The number of dialogs to include in the history. If -1, all dialogs are included.
+
+        Returns
+        -------
+        List[Dialog]
+            The list of the history of visited dialogs. The Dialog.to_markdown() method is used to generate the markdown.
+        """
+        res = []
+        history = self.prevdialogids + [self.currentdialog.dialogid]
+        if historylen > 0:
+            history = history[-historylen:]
+        for diagid in history:
+            res.append(self.dialogs[diagid])
+        return res
 
     def save_markdown(self, fname: str = None):
         """
@@ -286,6 +318,8 @@ class Story:
             The story as a markdown string
         """
         res = f"# {self.title}\n\n"
+        for l in self.secretsummary.split("\n"):
+            res += f"SECRET {l}\n" if l != "" else ""
         res += "\n\n".join([self.dialogs[x].to_markdown() for x in self.dialogs])
         res = res.strip()
         return res
@@ -315,11 +349,14 @@ class Story:
         nextdialogid = ""
         title = ""
         logic = ""
+        secretsummary = ""
         for line in lines:
             if line == "":
                 pass
             elif line.startswith("# "):
                 title = line[2:].strip()
+            elif line.startswith("SECRET "):
+                secretsummary += line[7:]
             elif line.startswith("## "):
                 if len(nextdialogid) > 0:
                     # a new choice is found, so the previous one is added to the dictionary
@@ -357,7 +394,7 @@ class Story:
         if len(logic) > 0 and logic[-1] == "\n":
             logic = logic[:-1]
         dialogs[dialogid] = Dialog(dialogid, text, choices, logic)
-        return cls(dialogs, title=title)
+        return cls(dialogs, title=title, secretsummary=secretsummary)
 
     @classmethod
     def from_markdown_file(cls, fname: Path | str):
@@ -598,24 +635,36 @@ class Story:
             self.messages = [
                 {
                     "role": "system",
-                    "content": "You are an author of a story for a text based role playing game. You use the structure of the following example to lead through the story. Each dialogue is identified with its heading. Each choice starts with a hyphen and the heading of the dialogue to which the choice leads. After a colon, the description of the choice starts. You write in the language given in the prompt. \n\n ```\n "
+                    "content": "You are an author of a story for a text based role playing game. You use the structure of the following example to lead through the story. Each dialogue is identified with its heading. Each choice starts with a hyphen and the heading of the dialogue to which the choice leads. After a colon, the description of the choice starts.\n\n```\n"
                     + storytemplate_without_logic
-                    + "\n ```\n",
+                    + "\n```",
                 }
             ]
+        for dia in self.list_from_history():
+            self.messages.append(
+                {
+                    "role": "system",
+                    "content": f"{dia.to_markdown()}",
+                }
+            )
         self.messages.append(
             {
                 "role": "user",
-                "content": f"The story so far is: \n\n ```\n {self.markdown_from_history(historylen=4)}\n ```",
+                "content": f"In the last dialog, the user chose the option '{nextdialogid} {next_text}'\n Write the next dialogue for this choice with the heading '{nextdialogid}'. Vary the number of choices with a maximum of 4 choices. Write only one dialogue. You write in the same language as the given prompt.",
             }
         )
-        self.messages.append(
-            {
-                "role": "user",
-                "content": f"The user chose the option '{nextdialogid} {next_text}'\n Write the next dialogue for this choice with the heading '{nextdialogid}'",
-            }
-        )
-        sendmessages = [self.messages[0]] + self.messages[-2:]
+        if len(self.messages) > 5:
+            sendmessages = [self.messages[0]] + self.messages[-5:]
+        else:
+            sendmessages = self.messages
+        if self.secretsummary != "":
+            sendmessages.insert(
+                -1,
+                {
+                    "role": "system",
+                    "content": f"You write based on the following plot summary and writing style instructions: {self.secretsummary}",
+                },
+            )
         # TODO: check if the outcome is valid
 
         # TODO: Change prompt log to a logging handler or make it configurable, optional

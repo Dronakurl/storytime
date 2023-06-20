@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "storytime_ai"
-version = "0.2.0"
+version = "0.3.0"
 description = "View and create interactive stories in terminal"
 authors = ["Dronakurl <konrad2710@gmail.com>"]
 readme = "README.rst"
@@ -22,16 +22,19 @@ networkx = {version = "^3.1", optional = true}
 matplotlib = {version = "^3.7.1", optional = true}
 openai = {version = "^0.27.7", optional = true}
 textual = { version="^0.27.0", optional = true}
+streamlit = { version="*", optional = true}
 python-dotenv = "^1.0.0"
 
 [tool.poetry.extras]
-extras = ["networkx", "matplotlib", "openai", "textual"]
+extras = ["networkx", "matplotlib", "openai", "textual", "streamlit"]
 textual = ["textual"]
+webapp = ["streamlit", "openai"]
 
 [tool.poetry.scripts]
-storytime = { callable = "storytime_ai:app.startapp", extras = ["textual"] }
-storytime-checker = { callable = "storytime_ai:story.checkintegrity" }
 storytime-cli = { callable = "storytime_ai:story.simpleplay" }
+storytime-checker = { callable = "storytime_ai:story.checkintegrity" }
+storytime-tui = { callable = "storytime_ai:app.startapp", extras = ["textual"] }
+storytime = { callable = "storytime_ai:streamlit_app",  extras = ["webapp"]}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"
@@ -42,6 +45,7 @@ sphinx = "<=6"
 sphinx-rtd-theme = "^1.2.2"
 myst-parser = "^1.0.0"
 textual = {extras = ["dev"], version = "^0.27.0"}
+
 
 [build-system]
 requires = ["poetry-core"]

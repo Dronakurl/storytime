@@ -11,3 +11,9 @@ from .story import Story, _openai, _plot, _graph
 from .dialog import Dialog
 from .choice import Choice
 from .app import startapp
+import os
+from pathlib import Path
+
+
+def streamlit_app():
+    os.system("streamlit run " + str(Path(__file__).parent / "webapp.py") + " --server.port 8501")
