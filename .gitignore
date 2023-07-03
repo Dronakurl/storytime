@@ -1,5 +1,6 @@
 openai.log
 __pycache__
+.dockerignore
 .env
 Archiv
 .archiv

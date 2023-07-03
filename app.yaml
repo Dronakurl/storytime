@@ -1,4 +1,4 @@
-runtime: custom
+runtime: python
 env: flex
 entrypoint: streamlit run storytime_ai/webapp.py –server.port=8080 –server.address=0.0.0.0
 
