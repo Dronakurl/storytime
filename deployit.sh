@@ -1,7 +1,7 @@
 echo "Should I run the app? (y/N)"
 read run_app
 if [ "$run_app" = "y" ]; then
-    poetry run streamlit run storytime_ai/webapp.py
+    poetry run streamlit run app.py
 fi
 echo "Should I run pre-commit? (y/N)"
 read run_precommit
@@ -14,7 +14,7 @@ if [ "$update_poetry" = "y" ]; then
     poetry install --all-extras
     poetry update
     poetry lock
-    poetry export -f requirements.txt --output requirements.txt --without-hashes --extras webapp
+    poetry export -f requirements.txt --output requirements.txt --without-hashes --extras app
 fi
 echo "Should I test the docker image locally? (y/N)"
 read test_docker

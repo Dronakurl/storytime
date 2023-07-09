@@ -16,4 +16,4 @@ from pathlib import Path
 
 
 def streamlit_app():
-    os.system("streamlit run " + str(Path(__file__).parent / "webapp.py") + " --server.port 8501")
+    os.system("streamlit run " + str(Path(__file__).parent.parent / "app.py") + " --server.port 8501")

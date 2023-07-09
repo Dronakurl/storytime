@@ -17,8 +17,9 @@ classifiers = [
 
 
 [tool.poetry.dependencies]
-python = "^3.9"
-pandas = "2.0.3"
+python = "^3.11"
+# pandas = "2.0.3"
+pandas = "*"
 networkx = {version = "*", optional = true}
 matplotlib = {version = "*", optional = true}
 openai = {version = "*", optional = true}
@@ -66,7 +67,7 @@ typeCheckingMode = "off"
 reportGeneralTypeIssues = false
 reportMissingTypeStubs = false
 useLibraryCodeForTypes = false
-pythonVersion = "^3.9"
+pythonVersion = "^3.11"
 pythonPlatform = "Linux"
 
 [tool.pytest.ini_options]
