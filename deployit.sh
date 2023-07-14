@@ -14,7 +14,7 @@ if [ "$update_poetry" = "y" ]; then
     poetry install --all-extras
     poetry update
     poetry lock
-    poetry export -f requirements.txt --output requirements.txt --without-hashes --extras app
+    poetry export -f requirements.txt --output requirements.txt --without-hashes --extras webapp
 fi
 echo "Should I test the docker image locally? (y/N)"
 read test_docker

@@ -1,6 +1,8 @@
-from storytime_ai import Dialog, Choice, Story
-import pytest
 import os
+
+import pytest
+
+from storytime_ai import Choice, Dialog, Story
 
 
 def assert_only_non_empty_lines(a, b):
@@ -33,9 +35,7 @@ def get_test_dialog():
 
 def test_dialog():
     dialog = get_test_dialog()
-    assert (
-        dialog.to_markdown()
-        == """## Coole IDß
+    assert dialog.to_markdown() == """## Coole IDß
 LOGIC PROPERTY test = 1
 
 Text in Unicode
@@ -44,7 +44,6 @@ Text in Unicode
 - eins: zweiter text
 
 - zwei: dritter text"""
-    )
 
 
 def test_dialog_markdown_parser():
@@ -171,7 +170,8 @@ def test_story_error(capsys):
     captured = capsys.readouterr()
     assert (
         captured.out.strip()
-        == "Error cannot use assignment expressions with attribute (<string>, line 1) in logic PROPERTY 'test3' = (self.story.title:='adsd')".strip()
+        == "Error cannot use assignment expressions with attribute (<string>, line 1) "
+        "in logic PROPERTY 'test3' = (self.story.title:='adsd')".strip()
     )
 
 

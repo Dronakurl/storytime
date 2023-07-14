@@ -1,11 +1,12 @@
 from pathlib import Path
+from typing import Sequence
 
 
-def getfilelist(mypath: str, suffix: str, withpath: bool = False) -> list[str] | list[Path]:
+def getfilelist(mypath: str, suffix: str, withpath: bool = False) -> Sequence[str | Path]:
     """Find all files in folders and subfolders given a specific extension"""
     p = Path(mypath).glob("*." + suffix)
-    l = [x for x in p if x.is_file()]
-    l = [x for x in l if not x.name.startswith(".")]
-    if withpath == False:
-        l = [f.name for f in l]
-    return l
+    file_list = [x for x in p if x.is_file()]
+    file_list = [x for x in file_list if not x.name.startswith(".")]
+    if not withpath:
+        return [f.name for f in file_list]
+    return file_list

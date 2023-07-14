@@ -14,7 +14,7 @@ With `storytime`, you can create fun interactive stories in your terminal. Just 
     - Documentation hat `dronakurl.github.io/storytime/`_
 
 .. _`dronakurl.github.io/storytime/`: https://dronakurl.github.io/storytime/
-.. _marker 
+.. _marker :
 
 .. image:: assets/screenshot.webp
    :alt: Screenshot of Storytime Web App

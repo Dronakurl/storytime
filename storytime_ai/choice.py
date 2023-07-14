@@ -2,6 +2,9 @@
 Choice class
 ============
 """
+import logging
+
+log = logging.getLogger("st." + __name__)
 
 
 class Choice:

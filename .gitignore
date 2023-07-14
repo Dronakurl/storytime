@@ -1,4 +1,7 @@
+.testmondata
+log
 openai.log
+poetry.lock
 __pycache__
 .dockerignore
 .env

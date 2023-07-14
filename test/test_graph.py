@@ -1,9 +1,10 @@
-from PIL import Image
+from test.test_story import get_test_story
+
 import numpy as np
 import pytest
+from PIL import Image
 
 from storytime_ai import story
-from test.test_story import get_test_story
 
 
 def test_plot(tmp_path):

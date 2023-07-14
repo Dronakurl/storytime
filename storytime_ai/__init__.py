@@ -7,13 +7,13 @@ Dialogs and Choices. It also contains the main logic for running the story.
 The _openai, _plot, and _graph variables are booleans that indicate whether
 the functionality for those features is available. 
 """
-from .story import Story, _openai, _plot, _graph
-from .dialog import Dialog
-from .choice import Choice
-from .app import startapp
 import os
 from pathlib import Path
 
+from .choice import Choice
+from .dialog import Dialog
+from .story import Story, _graph, _openai, _plot
+
 
 def streamlit_app():
-    os.system("streamlit run " + str(Path(__file__).parent.parent / "app.py") + " --server.port 8501")
+    os.system("streamlit run " + str(Path(__file__).parent / "app.py") + " --server.port 8501")

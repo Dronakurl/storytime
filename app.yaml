@@ -1,7 +1,6 @@
 runtime: python
 env: flex
-entrypoint: streamlit run app.py –server.port=8080 –server.address=0.0.0.0
-
-runtime_config:
-    operating_system: "ubuntu22"
-    runtime_version: "3.11"
+entrypoint: streamlit run --server.port=8080 --server.address=0.0.0.0 --server.enableCORS=false --server.enableWebsocketCompression=false --server.enableXsrfProtection=false --server.headless=true app.py
+automatic_scaling:
+    max_instances: 1 
+    min_instances: 0

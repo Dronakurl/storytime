@@ -14,19 +14,27 @@ The Story class is responsible for handling the Story with logic
 
 """
 import asyncio
-from importlib.resources import files
+import copy
+import json
+import logging
 import os
-from pathlib import Path
 import re
 import sys
+from importlib.resources import files
+from pathlib import Path
+from typing import List, Optional
+
+import storytime_ai.messagelog as messagelog
 
 from .choice import Choice
 from .dialog import Dialog
 from .require_decorator import Requirement, requires
 
+log = logging.getLogger("st." + __name__)
 try:
     import networkx as nx
 except ImportError:
+    log.info("No networkx support available")
     _graph = False
 else:
     _graph = True
@@ -34,6 +42,7 @@ else:
 try:
     import matplotlib.pyplot as plt
 except ImportError:
+    log.info("No matplotlib support available")
     _plot = False
 else:
     _plot = True
@@ -41,6 +50,7 @@ else:
 try:
     import openai
 except ImportError:
+    log.info("No matplotlib support available")
     _openai = False
 else:
     _openai = True
@@ -49,10 +59,10 @@ else:
     load_dotenv()
     apikey = os.getenv("OPENAI_API_KEY")
     if apikey is None:
-        # read from .env file
-        print("OPENAI_API_KEY not set")
+        log.warning("OPENAI_API_KEY not available, check .env")
         _openai = False
     openai.api_key = apikey
+    log.info(f"OpenAI API key {openai.api_key}")
 
 
 networkx_req = Requirement("networkx", _graph, "Network graph", raise_error=True)
@@ -107,8 +117,8 @@ class Story:
         self.currentdialog = self.dialogs[list(dialogs.keys())[0]]
         self.prevdialogids = [list(dialogs.keys())[0]]
         self.markdown_file = "story.md"
-        self.messages = []
-        self.properties = {}
+        self.messages: List[dict] = []
+        self.properties: dict = {}
         self.exec_logic()
         self.G = None
 
@@ -197,7 +207,7 @@ class Story:
             if len(self.currentdialog.choices) == 0:
                 input("Press enter to end")
                 break
-            print(f"Choices:")
+            print("Choices:")
             choices = dict(enumerate([(k, v) for (k, v) in self.currentdialog.choices.items()]))
             for i, choice in choices.items():
                 print(f"[{i}] = {choice[0]}: {choice[1].text}")
@@ -216,7 +226,7 @@ class Story:
                 print(f"Invalid choice! Choose one of {list(choices.keys())}")
                 print("*****************************************************")
                 continue
-            async for _, delta in self.continue_story(choices[choice][0], choices[choice][1], override_existing=False):
+            async for _, delta in self.continue_story(choices[choice][0], override_existing=False):
                 print(delta, end="")
 
             # self.next_dialog(choices[choice][0])
@@ -258,7 +268,8 @@ class Story:
         Returns
         -------
         str
-            The markdown of the history of visited dialogs. The Dialog.to_markdown() method is used to generate the markdown.
+            The markdown of the history of visited dialogs. The Dialog.to_markdown() method
+            is used to generate the markdown.
         """
         res = f"# {self.title}\n\n"
         history = self.prevdialogids + [self.currentdialog.dialogid]
@@ -282,7 +293,8 @@ class Story:
         Returns
         -------
         List[Dialog]
-            The list of the history of visited dialogs. The Dialog.to_markdown() method is used to generate the markdown.
+            The list of the history of visited dialogs. The Dialog.to_markdown()
+            method is used to generate the markdown.
         """
         res = []
         history = self.prevdialogids + [self.currentdialog.dialogid]
@@ -292,7 +304,7 @@ class Story:
             res.append(self.dialogs[diagid])
         return res
 
-    def save_markdown(self, fname: str = None):
+    def save_markdown(self, fname: Optional[str] = None):
         """
         Saves the story to a markdown file.
 
@@ -318,8 +330,8 @@ class Story:
             The story as a markdown string
         """
         res = f"# {self.title}\n\n"
-        for l in self.secretsummary.split("\n"):
-            res += f"SECRET {l}\n" if l != "" else ""
+        for words in self.secretsummary.split("\n"):
+            res += f"SECRET {words}\n" if words != "" else ""
         res += "\n\n".join([self.dialogs[x].to_markdown() for x in self.dialogs])
         res = res.strip()
         return res
@@ -445,7 +457,7 @@ class Story:
                 self.G.add_edge(dialogid, choiceid)
 
     @requires(matplotlib_req, networkx_req)
-    def plot_graph(self, graphfname: str = None):
+    def plot_graph(self, graphfname: Optional[str] = None):
         """
         Plot the story as a graph. If a filename in `graphfname` is given, the graph is saved to that file.
         Otherwise, the graph is shown in a window.
@@ -576,14 +588,18 @@ class Story:
         if len(prompt) == 0:
             prompt = cls.defaultprompt
         completion = openai.ChatCompletion.acreate(
-            model="gpt-3.5-turbo",
+            # model="gpt-3.5-turbo",
+            model="gpt-4",
             # model="text-ada-001",
             messages=[
                 {
                     "role": "system",
-                    "content": "Write the story for a text based role playing game in the markdown structure of the following example. Each dialogue is identified with its heading. Each choice starts with a hyphen and the heading of the dialogue to which the choice leads. After a colon, the description of the choice starts. Write in the language given in the prompt, but keep the keywords LOGIC, PROPERTIES and NEXTDIALOG in English. \n\n ```\n "
-                    + cls.storytemplate
-                    + "\n ```\n",
+                    "content": """Write the story for a text based role playing game in the markdown structure 
+                    of the following example. Each dialogue is identified with its heading. Each choice 
+                    starts with a hyphen and the heading of the dialogue to which the choice leads. 
+                    After a colon, the description of the choice starts. Write in the language given 
+                    in the prompt, but keep the keywords LOGIC, PROPERTIES and NEXTDIALOG in English. 
+                    \n\n ```\n """ + cls.storytemplate + "\n ```\n",
                 },
                 {"role": "user", "content": prompt},
             ],
@@ -629,48 +645,64 @@ class Story:
         if len(next_text) > 0:
             next_text = ": " + next_text
 
-        storytemplate_without_logic = "\n".join([l for l in self.storytemplate.split("\n") if "LOGIC" not in l])
+        storytemplate_without_logic = "\n".join([lw for lw in self.storytemplate.split("\n") if "LOGIC" not in lw])
         if len(self.messages) == 0:
             # If there are no messages, we need to start with a system message
             self.messages = [
                 {
                     "role": "system",
-                    "content": "You are an author of a story for a text based role playing game. You use the structure of the following example to lead through the story. Each dialogue is identified with its heading. Each choice starts with a hyphen and the heading of the dialogue to which the choice leads. After a colon, the description of the choice starts.\n\n```\n"
-                    + storytemplate_without_logic
-                    + "\n```",
+                    "content": (
+                        """You are an author of a story for a text based role playing game. You 
+                    use the structure of the following example to lead through the story. 
+                    Each dialogue is identified with its heading. After the heading, the description
+                    of the dialogue is given. After that, the choices are given.
+                    Each choice starts with a hyphen and the heading of the dialogue to which 
+                    the choice leads. After a colon, the description of the choice starts.\n\n```\n"""
+                        + storytemplate_without_logic
+                        + "\n```"
+                    ),
                 }
             ]
-        for dia in self.list_from_history():
-            self.messages.append(
-                {
-                    "role": "system",
-                    "content": f"{dia.to_markdown()}",
-                }
-            )
+        # for dia in self.list_from_history():
+        #     self.messages.append(
+        #         {
+        #             "role": "system",
+        #             "content": f"{dia.to_markdown()}",
+        #         }
+        #     )
         self.messages.append(
             {
-                "role": "user",
-                "content": f"In the last dialog, the user chose the option '{nextdialogid} {next_text}'\n Write the next dialogue for this choice with the heading '{nextdialogid}'. Vary the number of choices with a maximum of 4 choices. Write only one dialogue. You write in the same language as the given prompt.",
+                "role": "system",
+                "content": f"{self.currentdialog.to_markdown()}",
             }
         )
+        sendmessages = copy.deepcopy(self.messages)
         if len(self.messages) > 5:
-            sendmessages = [self.messages[0]] + self.messages[-5:]
-        else:
-            sendmessages = self.messages
+            sendmessages = [sendmessages[0]] + sendmessages[-5:]
         if self.secretsummary != "":
-            sendmessages.insert(
-                -1,
+            sendmessages.append(
                 {
                     "role": "system",
-                    "content": f"You write based on the following plot summary and writing style instructions: {self.secretsummary}",
+                    "content": (
+                        "You write based on the following plot summary and writing style"
+                        f"instructions: {self.secretsummary}"
+                    ),
                 },
             )
-        # TODO: check if the outcome is valid
+        sendmessages.append(
+            {
+                "role": "user",
+                "content": (
+                    f"In the last dialog, the user chose the option '{nextdialogid} {next_text}'\n"
+                    f"Write the next dialogue for this choice with the heading '{nextdialogid}'. "
+                    "Vary the number of choices with a maximum of 4 choices. Write only one dialogue. "
+                    "You write in the same language as the given prompt."
+                ),
+            }
+        )
 
-        # TODO: Change prompt log to a logging handler or make it configurable, optional
-        logmsg = "\n==========================================\n\n".join([x.get("content") for x in sendmessages])
-        with open("openai.log", "a") as f:
-            f.write(f"\n **********************************************\n {logmsg}\n\n")
+        messagelog.messagelog(sendmessages)
+        log.info(json.dumps(sendmessages, indent=4))
 
         completion = openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo",
@@ -686,6 +718,7 @@ class Story:
             current_result += delta
             yield current_result, delta
 
+        # TODO: check if the outcome is valid
         generated_dialog = Dialog.from_markdown(current_result)
         if generated_dialog.dialogid != nextdialogid:
             generated_dialog.dialogid = nextdialogid

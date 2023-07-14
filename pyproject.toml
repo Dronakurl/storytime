@@ -18,14 +18,15 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.11"
-# pandas = "2.0.3"
-pandas = "*"
-networkx = {version = "*", optional = true}
-matplotlib = {version = "*", optional = true}
-openai = {version = "*", optional = true}
-textual = { version="*", optional = true}
-streamlit = { version="*", optional = true}
-python-dotenv = "*"
+colorlog = "^6.7.0"
+jinja2 = "^3.1.2"
+pandas = "^2.0.3"
+python-dotenv = "^1.0.0"
+streamlit = {version = "^1.26.0", optional = true}
+networkx = {version="^3.1", optional = true }
+openai = {version="^0.27.9", optional = true }
+textual = {version="^0.35.1", optional = true}
+matplotlib = {version="^3.7.2", optional = true}
 
 [tool.poetry.extras]
 extras = ["networkx", "matplotlib", "openai", "textual", "streamlit"]
@@ -35,7 +36,7 @@ webapp = ["streamlit", "openai"]
 [tool.poetry.scripts]
 storytime-cli = { callable = "storytime_ai:story.simpleplay" }
 storytime-checker = { callable = "storytime_ai:story.checkintegrity" }
-storytime-tui = { callable = "storytime_ai:app.startapp", extras = ["textual"] }
+storytime-tui = { callable = "storytime_ai:textual_app.startapp", extras = ["textual"] }
 storytime = { callable = "storytime_ai:streamlit_app",  extras = ["webapp"]}
 
 [tool.poetry.group.dev.dependencies]
@@ -47,7 +48,13 @@ sphinx = "*"
 sphinx-rtd-theme = "*"
 myst-parser = "*"
 textual = {extras = ["dev"], version = "*"}
+ruff = "^0.0.286"
+black = "^23.7.0"
+pytest-testmon = "^2.0.12"
 
+[tool.ruff]
+line-length = 120
+exclude = [ "**/__init__.py" ]
 
 [build-system]
 requires = ["poetry-core"]
@@ -55,30 +62,22 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 120
+preview = true
 
-[tool.pyright]
-include = ["**/*.py"]
-exclude = [ "**/__pycache__",
-    ".archiv/**"
-    , "storytime_ai/templates/*.md"
-]
-ignore = ["**/__init__.py"]
-typeCheckingMode = "off"
-reportGeneralTypeIssues = false
-reportMissingTypeStubs = false
-useLibraryCodeForTypes = false
-pythonVersion = "^3.11"
-pythonPlatform = "Linux"
+[tool.mypy]
+ignore_missing_imports = true
+files = ["**/*.py", "*.py"]
+exclude = [".archiv" ]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = [
+    "--testmon",
     "--import-mode=importlib",
     "-ra -q",
-    # "--disable-warnings",
     "--ignore=.archiv",
 ]
 pythonpath = ["."]
 testpaths = [
-    "tests",
+    "test",
 ]

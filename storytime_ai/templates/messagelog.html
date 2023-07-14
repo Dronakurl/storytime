@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Log Entry Viewer</title>
+    <style>
+      body {
+        display: flex;
+        margin: 0;
+        padding: 0;
+        font-family:
+          Noto sans,
+          sans-serif;
+      }
+      #sidebar {
+        width: 400px;
+        background-color: #aaccff;
+        color: black;
+        padding: 20px;
+        filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07))
+          drop-shadow(0 2px 2px rgb(0 0 0 / 0.06));
+        height: calc(
+          99.99vh
+        ); /* Subtract the total padding from the full height */
+        overflow-y: auto;
+        box-sizing: border-box; /* Include padding and border in total width and height */
+        position: sticky; /* Keep the sidebar unaltered when scrolling */
+        top: 0; /* Stick the sidebar to the top */
+      }
+      #main-content {
+        flex: 1;
+        padding: 20px;
+      }
+      .log-entry {
+        margin-bottom: 10px;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        display: none;
+      }
+      #sidebar a {
+        display: block;
+        margin-bottom: 3px;
+        width: calc(100 - 20px);
+        padding: 10px;
+        text-align: left;
+        background-color: #f0f0f0;
+        color: #333;
+        text-decoration: none;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07))
+          drop-shadow(0 2px 2px rgb(0 0 0 / 0.06));
+      }
+      #sidebar a:hover {
+        background-color: #aaaa11;
+        color: white;
+      }
+      span.role {
+        background-color: #22cc22;
+        padding: 1px;
+        margin-right: 10px;
+      }
+      div.content {
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        background-color: #aaaaff;
+        padding: 2px;
+      }
+      p.item {
+        margin: 1px 0px 1px 0px;
+      }
+      p.item::before {
+        content: "★";
+      }
+      h2 {
+        font-size: 12pt;
+        margin: 2px 0 2px 0;
+      }
+    </style>
+    <script type="text/javascript">
+      function showLogEntry(entryId) {
+        var logEntryElements = document.getElementsByClassName("log-entry");
+        for (var i = 0; i < logEntryElements.length; i++) {
+          if (logEntryElements[i].id !== entryId) {
+            logEntryElements[i].style.display = "none";
+          }
+        }
+        var logEntryDiv = document.getElementById(entryId);
+        logEntryDiv.style.display = "block";
+      }
+    </script>
+  </head>
+
+  <body>
+    <div id="sidebar">
+      <h2>Log Entries</h2>
+      {% for entry in log_entries %}
+      <a
+        href="#{{ entry.heading|lower|replace(' ', '-') }}"
+        onclick="showLogEntry('{{ entry.heading|lower|replace(' ', '-') }}')"
+      >
+        {{ entry.heading }}
+      </a>
+      {% endfor %}
+    </div>
+    <div id="main-content">
+      <!-- <h1>Log Entry Viewer</h1> -->
+      {% for entry in log_entries %}
+      <div class="log-entry" id="{{ entry.heading|lower|replace(' ', '-') }}">
+        <h2>{{ entry.heading }}</h2>
+        {% for paragraph in entry.content %}
+
+        <div class="content">
+          <span class="role">{{ paragraph.role }}</span>{{ paragraph.content }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </body>
+</html>

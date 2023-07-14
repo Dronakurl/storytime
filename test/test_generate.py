@@ -1,6 +1,6 @@
-from storytime_ai import Story
-import asyncio  # pyright: ignore
 import pytest
+
+from storytime_ai import Story
 
 
 @pytest.mark.asyncio
