@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dialog Class &mdash; Storytime 0.2.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=938c9ccc"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Install storytime from github" href="install_from_github.html" />
+    <link rel="prev" title="Story Class" href="story.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Storytime
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="story.html">Story Class</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Dialog Class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">Dialog class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#storytime_ai.dialog.Dialog"><code class="docutils literal notranslate"><span class="pre">Dialog</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.dialog.Dialog.dialogid"><code class="docutils literal notranslate"><span class="pre">Dialog.dialogid</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.dialog.Dialog.text"><code class="docutils literal notranslate"><span class="pre">Dialog.text</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.dialog.Dialog.choices"><code class="docutils literal notranslate"><span class="pre">Dialog.choices</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.dialog.Dialog.logic"><code class="docutils literal notranslate"><span class="pre">Dialog.logic</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.dialog.Dialog.from_markdown"><code class="docutils literal notranslate"><span class="pre">Dialog.from_markdown()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.dialog.Dialog.to_markdown"><code class="docutils literal notranslate"><span class="pre">Dialog.to_markdown()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.dialog.Dialog.write_logic"><code class="docutils literal notranslate"><span class="pre">Dialog.write_logic()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#choice-class">Choice class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#storytime_ai.choice.Choice"><code class="docutils literal notranslate"><span class="pre">Choice</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.choice.Choice.text"><code class="docutils literal notranslate"><span class="pre">Choice.text</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.choice.Choice.nextdialogid"><code class="docutils literal notranslate"><span class="pre">Choice.nextdialogid</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.choice.Choice.to_markdown"><code class="docutils literal notranslate"><span class="pre">Choice.to_markdown()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="install_from_github.html">Install storytime from github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Storytime development</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Storytime</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Dialog Class</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/dialog.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-storytime_ai.dialog">
+<span id="dialog-class"></span><h1>Dialog Class<a class="headerlink" href="#module-storytime_ai.dialog" title="Link to this heading"></a></h1>
+<section id="id1">
+<h2>Dialog class<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="storytime_ai.dialog.Dialog">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">storytime_ai.dialog.</span></span><span class="sig-name descname"><span class="pre">Dialog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dialogid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#storytime_ai.choice.Choice" title="storytime_ai.choice.Choice"><span class="pre">Choice</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.dialog.Dialog" title="Link to this definition"></a></dt>
+<dd><p>Dialog class, that represents a single dialogue in the story.</p>
+<p>A dialog provides markdown output and can contain logic in a basic syntax.
+This logic is parsed and used by the Story.exec_logic() method.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="storytime_ai.dialog.Dialog.dialogid">
+<span class="sig-name descname"><span class="pre">dialogid</span></span><a class="headerlink" href="#storytime_ai.dialog.Dialog.dialogid" title="Link to this definition"></a></dt>
+<dd><p>The unique identifier of the dialog. It is a heading in the markdown output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="storytime_ai.dialog.Dialog.text">
+<span class="sig-name descname"><span class="pre">text</span></span><a class="headerlink" href="#storytime_ai.dialog.Dialog.text" title="Link to this definition"></a></dt>
+<dd><p>Dialog text. It is a paragraph in the markdown output. Markdown is supported,
+if the heading level is not higher than three (‘###’)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="storytime_ai.dialog.Dialog.choices">
+<span class="sig-name descname"><span class="pre">choices</span></span><a class="headerlink" href="#storytime_ai.dialog.Dialog.choices" title="Link to this definition"></a></dt>
+<dd><p>A dictionary of Choice objects. The key is the next dialog id (heading),
+the value is the Choice object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, <a class="reference internal" href="#storytime_ai.choice.Choice" title="storytime_ai.choice.Choice">Choice</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="storytime_ai.dialog.Dialog.logic">
+<span class="sig-name descname"><span class="pre">logic</span></span><a class="headerlink" href="#storytime_ai.dialog.Dialog.logic" title="Link to this definition"></a></dt>
+<dd><p>A string containing the logic. It is parsed by the Story.exec_logic() method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.dialog.Dialog.from_markdown">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_markdown</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">markdown</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.dialog.Dialog.from_markdown" title="Link to this definition"></a></dt>
+<dd><p>Create a Dialog object from a markdown string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>markdown</strong> (<em>str</em>) – The markdown string to parse.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.dialog.Dialog.to_markdown">
+<span class="sig-name descname"><span class="pre">to_markdown</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">includelogic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.dialog.Dialog.to_markdown" title="Link to this definition"></a></dt>
+<dd><p>Write the dialog to markdown string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>includelogic</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the logic is included in the markdown output, by default True</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The dialog as markdown string.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.dialog.Dialog.write_logic">
+<span class="sig-name descname"><span class="pre">write_logic</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.dialog.Dialog.write_logic" title="Link to this definition"></a></dt>
+<dd><p>Write the logic to markdown string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The logic as markdown string. each line is prefixed with <cite>LOGIC</cite></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<section id="choice-class">
+<span id="module-storytime_ai.choice"></span><h2>Choice class<a class="headerlink" href="#choice-class" title="Link to this heading"></a></h2>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="storytime_ai.choice.Choice">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">storytime_ai.choice.</span></span><span class="sig-name descname"><span class="pre">Choice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nextdialogid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.choice.Choice" title="Link to this definition"></a></dt>
+<dd><p>Choice class, that represents a choice in a dialog</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="storytime_ai.choice.Choice.text">
+<span class="sig-name descname"><span class="pre">text</span></span><a class="headerlink" href="#storytime_ai.choice.Choice.text" title="Link to this definition"></a></dt>
+<dd><p>The text of the choice</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="storytime_ai.choice.Choice.nextdialogid">
+<span class="sig-name descname"><span class="pre">nextdialogid</span></span><a class="headerlink" href="#storytime_ai.choice.Choice.nextdialogid" title="Link to this definition"></a></dt>
+<dd><p>The id of the next dialog, which is the heading of the next dialogue</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.choice.Choice.to_markdown">
+<span class="sig-name descname"><span class="pre">to_markdown</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.choice.Choice.to_markdown" title="Link to this definition"></a></dt>
+<dd><p>Returns the choice in markdown format</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="story.html" class="btn btn-neutral float-left" title="Story Class" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="install_from_github.html" class="btn btn-neutral float-right" title="Install storytime from github" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Dronakurl.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

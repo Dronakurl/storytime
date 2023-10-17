@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Story Class &mdash; Storytime 0.2.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=938c9ccc"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Dialog Class" href="dialog.html" />
+    <link rel="prev" title="Usage" href="usage.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Storytime
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Story Class</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">Story class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#attributes">Attributes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.story.Story"><code class="docutils literal notranslate"><span class="pre">Story</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#storytime_ai.story.Story.title"><code class="docutils literal notranslate"><span class="pre">Story.title</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#storytime_ai.story.Story.dialogs"><code class="docutils literal notranslate"><span class="pre">Story.dialogs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#storytime_ai.story.Story.currentdialog"><code class="docutils literal notranslate"><span class="pre">Story.currentdialog</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#storytime_ai.story.Story.prevdialogids"><code class="docutils literal notranslate"><span class="pre">Story.prevdialogids</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#storytime_ai.story.Story.markdown_file"><code class="docutils literal notranslate"><span class="pre">Story.markdown_file</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#storytime_ai.story.Story.messages"><code class="docutils literal notranslate"><span class="pre">Story.messages</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#storytime_ai.story.Story.properties"><code class="docutils literal notranslate"><span class="pre">Story.properties</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#storytime_ai.story.Story.secretsummary"><code class="docutils literal notranslate"><span class="pre">Story.secretsummary</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#storytime_ai.story.Story.G"><code class="docutils literal notranslate"><span class="pre">Story.G</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#storytime_ai.story.Story.__init__"><code class="docutils literal notranslate"><span class="pre">Story.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#basic-functionality">Basic Functionality</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.story.Story.next_dialog"><code class="docutils literal notranslate"><span class="pre">Story.next_dialog()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.story.Story.exec_logic"><code class="docutils literal notranslate"><span class="pre">Story.exec_logic()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.story.Story.addchoice"><code class="docutils literal notranslate"><span class="pre">Story.addchoice()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.story.Story.back_dialog"><code class="docutils literal notranslate"><span class="pre">Story.back_dialog()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#save-and-load-markdown">Save and Load markdown</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.story.Story.save_markdown"><code class="docutils literal notranslate"><span class="pre">Story.save_markdown()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.story.Story.to_markdown"><code class="docutils literal notranslate"><span class="pre">Story.to_markdown()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.story.Story.from_markdown"><code class="docutils literal notranslate"><span class="pre">Story.from_markdown()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.story.Story.from_markdown_file"><code class="docutils literal notranslate"><span class="pre">Story.from_markdown_file()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#networkx-graph">NetworkX Graph</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.story.Story.create_graph"><code class="docutils literal notranslate"><span class="pre">Story.create_graph()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.story.Story.plot_graph"><code class="docutils literal notranslate"><span class="pre">Story.plot_graph()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.story.Story.has_subgraphs"><code class="docutils literal notranslate"><span class="pre">Story.has_subgraphs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#integrity-checks-and-corrections">Integrity Checks and corrections</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.story.Story.check_integrity"><code class="docutils literal notranslate"><span class="pre">Story.check_integrity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.story.Story.prune_dangling_choices"><code class="docutils literal notranslate"><span class="pre">Story.prune_dangling_choices()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.story.Story.restrict_to_largest_substory"><code class="docutils literal notranslate"><span class="pre">Story.restrict_to_largest_substory()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#story-generation">Story Generation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.story.Story.generate_story_from_file"><code class="docutils literal notranslate"><span class="pre">Story.generate_story_from_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#storytime_ai.story.Story.generate_story"><code class="docutils literal notranslate"><span class="pre">Story.generate_story()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dialog.html">Dialog Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install_from_github.html">Install storytime from github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Storytime development</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Storytime</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Story Class</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/story.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-storytime_ai.story">
+<span id="story-class"></span><h1>Story Class<a class="headerlink" href="#module-storytime_ai.story" title="Link to this heading"></a></h1>
+<section id="id1">
+<h2>Story class<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>This module contains the classes that represent a story.
+A Story is a collection of Dialogs.
+A Dialog contains a selection of Choices.
+The Story class is responsible for handling the Story with logic</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">storytime_ai</span> <span class="kn">import</span> <span class="n">Story</span>
+<span class="n">Story</span><span class="o">.</span><span class="n">from_markdown_file</span><span class="p">(</span><span class="s2">&quot;storytime_ai/template/story.md&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="storytime_ai.story.Story">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">storytime_ai.story.</span></span><span class="sig-name descname"><span class="pre">Story</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dialogs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="dialog.html#storytime_ai.dialog.Dialog" title="storytime_ai.dialog.Dialog"><span class="pre">Dialog</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Story'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secretsummary</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story" title="Link to this definition"></a></dt>
+<dd><p>A class used to represent a Story for navigation, generation and visualization.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.title">
+<span class="sig-name descname"><span class="pre">title</span></span><a class="headerlink" href="#storytime_ai.story.Story.title" title="Link to this definition"></a></dt>
+<dd><p>The title of the story</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.dialogs">
+<span class="sig-name descname"><span class="pre">dialogs</span></span><a class="headerlink" href="#storytime_ai.story.Story.dialogs" title="Link to this definition"></a></dt>
+<dd><p>A dictionary of Dialog objects with the heading of each dialogue as key</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, <a class="reference internal" href="dialog.html#storytime_ai.dialog.Dialog" title="storytime_ai.dialog.Dialog">Dialog</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.currentdialog">
+<span class="sig-name descname"><span class="pre">currentdialog</span></span><a class="headerlink" href="#storytime_ai.story.Story.currentdialog" title="Link to this definition"></a></dt>
+<dd><p>Heading of the current dialog</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.prevdialogids">
+<span class="sig-name descname"><span class="pre">prevdialogids</span></span><a class="headerlink" href="#storytime_ai.story.Story.prevdialogids" title="Link to this definition"></a></dt>
+<dd><p>List of headings of previous dialogs, provides a history of the story so far</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.markdown_file">
+<span class="sig-name descname"><span class="pre">markdown_file</span></span><a class="headerlink" href="#storytime_ai.story.Story.markdown_file" title="Link to this definition"></a></dt>
+<dd><p>Path to the markdown file where the story was loaded or saved</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.messages">
+<span class="sig-name descname"><span class="pre">messages</span></span><a class="headerlink" href="#storytime_ai.story.Story.messages" title="Link to this definition"></a></dt>
+<dd><p>ChatGPT message history, will be modified by the methods, not only appended</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[dict[str, str]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.properties">
+<span class="sig-name descname"><span class="pre">properties</span></span><a class="headerlink" href="#storytime_ai.story.Story.properties" title="Link to this definition"></a></dt>
+<dd><p>A dictionary of properties that can be used in the logic of the story</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.secretsummary">
+<span class="sig-name descname"><span class="pre">secretsummary</span></span><a class="headerlink" href="#storytime_ai.story.Story.secretsummary" title="Link to this definition"></a></dt>
+<dd><p>A secret summary of the story, not shown in the dialogs</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.G">
+<span class="sig-name descname"><span class="pre">G</span></span><a class="headerlink" href="#storytime_ai.story.Story.G" title="Link to this definition"></a></dt>
+<dd><p>A networkx graph of the story</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>networkx.Graph</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.__init__">
+<span class="sig-prename descclassname"><span class="pre">Story.</span></span><span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dialogs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="dialog.html#storytime_ai.dialog.Dialog" title="storytime_ai.dialog.Dialog"><span class="pre">Dialog</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Story'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secretsummary</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story.__init__" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dialogs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="dialog.html#storytime_ai.dialog.Dialog" title="storytime_ai.dialog.Dialog"><em>Dialog</em></a><em>]</em>) – A dictionary of Dialog objects with the heading of each dialogue as key</p></li>
+<li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – The title of the story</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="basic-functionality">
+<h2>Basic Functionality<a class="headerlink" href="#basic-functionality" title="Link to this heading"></a></h2>
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.next_dialog">
+<span class="sig-prename descclassname"><span class="pre">Story.</span></span><span class="sig-name descname"><span class="pre">next_dialog</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nextdialogid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story.next_dialog" title="Link to this definition"></a></dt>
+<dd><p>Changes the current dialog to the one with the heading nextdialogid</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>nextdialogid</strong> (<em>str</em>) – The heading of the next dialog</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the nextdialogid is not found in the story</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.exec_logic">
+<span class="sig-prename descclassname"><span class="pre">Story.</span></span><span class="sig-name descname"><span class="pre">exec_logic</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story.exec_logic" title="Link to this definition"></a></dt>
+<dd><p>Executes the logic of the current dialog</p>
+<p>The logic is a string with keywords PROPERTY and NEXTDIALOG.
+They are interpreted such that the properties are set and checked.
+PROPERTY “name” = “value” sets the property “name” to “value”.
+NEXTDIALOG “heading” IF “condition” sets the next dialog to “heading” if “condition” is true.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.addchoice">
+<span class="sig-prename descclassname"><span class="pre">Story.</span></span><span class="sig-name descname"><span class="pre">addchoice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nextdialogid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story.addchoice" title="Link to this definition"></a></dt>
+<dd><p>Adds a choice to the current dialog</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>text</strong> (<em>str</em>) – The text of the choice</p></li>
+<li><p><strong>nextdialogid</strong> (<em>str</em>) – The heading of the next dialog</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.back_dialog">
+<span class="sig-prename descclassname"><span class="pre">Story.</span></span><span class="sig-name descname"><span class="pre">back_dialog</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story.back_dialog" title="Link to this definition"></a></dt>
+<dd><p>Changes the current dialog to the previous one, based on the history of visited dialogs</p>
+</dd></dl>
+
+</section>
+<section id="save-and-load-markdown">
+<h2>Save and Load markdown<a class="headerlink" href="#save-and-load-markdown" title="Link to this heading"></a></h2>
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.save_markdown">
+<span class="sig-prename descclassname"><span class="pre">Story.</span></span><span class="sig-name descname"><span class="pre">save_markdown</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story.save_markdown" title="Link to this definition"></a></dt>
+<dd><p>Saves the story to a markdown file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fname</strong> (<em>str</em><em>, </em><em>optional</em>) – The filename to save the story to.
+If None, the filename in the property markdown_file is used.
+If fname is given, the property markdown_file is set to fname.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.to_markdown">
+<span class="sig-prename descclassname"><span class="pre">Story.</span></span><span class="sig-name descname"><span class="pre">to_markdown</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story.to_markdown" title="Link to this definition"></a></dt>
+<dd><p>Returns the story as a markdown string</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The story as a markdown string</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.from_markdown">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Story.</span></span><span class="sig-name descname"><span class="pre">from_markdown</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">markdown</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story.from_markdown" title="Link to this definition"></a></dt>
+<dd><p>Parse a string with markdown and return an Story object.
+No integrity checks are performed with this method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>markdown</strong> (<em>str</em>) – The markdown string to parse</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The story object</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#storytime_ai.story.Story" title="storytime_ai.story.Story">Story</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.from_markdown_file">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Story.</span></span><span class="sig-name descname"><span class="pre">from_markdown_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story.from_markdown_file" title="Link to this definition"></a></dt>
+<dd><p>Parse a markdown file and return an Story object.
+No integrity checks are performed with this method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fname</strong> (<em>Path</em><em> or </em><em>str</em>) – The filename of the markdown file to parse</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The story object</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#storytime_ai.story.Story" title="storytime_ai.story.Story">Story</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="networkx-graph">
+<h2>NetworkX Graph<a class="headerlink" href="#networkx-graph" title="Link to this heading"></a></h2>
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.create_graph">
+<span class="sig-prename descclassname"><span class="pre">Story.</span></span><span class="sig-name descname"><span class="pre">create_graph</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story.create_graph" title="Link to this definition"></a></dt>
+<dd><p>Create a networkx graph of the story</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.plot_graph">
+<span class="sig-prename descclassname"><span class="pre">Story.</span></span><span class="sig-name descname"><span class="pre">plot_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graphfname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story.plot_graph" title="Link to this definition"></a></dt>
+<dd><p>Plot the story as a graph. If a filename in <cite>graphfname</cite> is given, the graph is saved to that file.
+Otherwise, the graph is shown in a window.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>graphfname</strong> (<em>str</em><em>, </em><em>optional</em>) – The filename to save the graph to.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.has_subgraphs">
+<span class="sig-prename descclassname"><span class="pre">Story.</span></span><span class="sig-name descname"><span class="pre">has_subgraphs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story.has_subgraphs" title="Link to this definition"></a></dt>
+<dd><p>Check if the story has multiple subgraphs, i.e. multiple stories that are not connected to
+each other by a dialog choice.</p>
+</dd></dl>
+
+</section>
+<section id="integrity-checks-and-corrections">
+<h2>Integrity Checks and corrections<a class="headerlink" href="#integrity-checks-and-corrections" title="Link to this heading"></a></h2>
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.check_integrity">
+<span class="sig-prename descclassname"><span class="pre">Story.</span></span><span class="sig-name descname"><span class="pre">check_integrity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story.check_integrity" title="Link to this definition"></a></dt>
+<dd><p>Check the integrity of the story. This method checks if the story has multiple
+subgraphs and if all the choices are valid.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.prune_dangling_choices">
+<span class="sig-prename descclassname"><span class="pre">Story.</span></span><span class="sig-name descname"><span class="pre">prune_dangling_choices</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story.prune_dangling_choices" title="Link to this definition"></a></dt>
+<dd><p>Remove choices that point to a dialog that does not exist</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.restrict_to_largest_substory">
+<span class="sig-prename descclassname"><span class="pre">Story.</span></span><span class="sig-name descname"><span class="pre">restrict_to_largest_substory</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story.restrict_to_largest_substory" title="Link to this definition"></a></dt>
+<dd><p>Restrict the story to the largest substory. This method removes all the dialogs and choices
+that are not in the largest substory.</p>
+</dd></dl>
+
+</section>
+<section id="story-generation">
+<h2>Story Generation<a class="headerlink" href="#story-generation" title="Link to this heading"></a></h2>
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.generate_story_from_file">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Story.</span></span><span class="sig-name descname"><span class="pre">generate_story_from_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'./storytime_ai/templates/story.md'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sleep_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story.generate_story_from_file" title="Link to this definition"></a></dt>
+<dd><p>Generate a story from a file for testing purposes without using OpenAI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fname</strong> (<em>str</em>) – The name of the file to read from.</p></li>
+<li><p><strong>sleep_time</strong> (<em>float</em>) – The time to sleep between each line of the file in seconds</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>current_result</strong> (<em>str</em>) – The current result of the story</p></li>
+<li><p><strong>delta</strong> (<em>str</em>) – The string that was just added to the story</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="storytime_ai.story.Story.generate_story">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Story.</span></span><span class="sig-name descname"><span class="pre">generate_story</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prompt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#storytime_ai.story.Story.generate_story" title="Link to this definition"></a></dt>
+<dd><p>Generate a story from a prompt.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> – Keyword arguments to pass to chatgpt</p>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>current_result</strong> (<em>str</em>) – The current result of the story</p></li>
+<li><p><strong>delta</strong> (<em>str</em>) – The string that was just added to the story</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="usage.html" class="btn btn-neutral float-left" title="Usage" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="dialog.html" class="btn btn-neutral float-right" title="Dialog Class" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Dronakurl.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

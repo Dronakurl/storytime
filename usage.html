@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Usage &mdash; Storytime 0.2.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=938c9ccc"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Story Class" href="story.html" />
+    <link rel="prev" title="Storytime!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Storytime
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-install">How to install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#start-the-storytime-web-app">Start the Storytime web app</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#storytime-loves-the-command-line">Storytime loves the command line</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#helper-script-check-integrity-of-your-story">Helper script: Check integrity of your story</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="story.html">Story Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dialog.html">Dialog Class</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install_from_github.html">Install storytime from github</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Storytime development</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Storytime</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Usage</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/usage.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h1>
+<section id="how-to-install">
+<h2>How to install<a class="headerlink" href="#how-to-install" title="Link to this heading"></a></h2>
+<ul>
+<li><p>Install the latest version with <cite>pip</cite></p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pip install &#39;git+https://github.com/Dronakurl/storytime.git#egg=storytime_ai[extras]&#39;</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Set environment variable with openai api key (optional)</p>
+<p>To use the story generation with openai, you need to set the environment variable <cite>OPENAI_API_KEY</cite> to your openai api key. You can get your api key from the <a class="reference external" href="https://platform.openai.com/account/api-keys">openai settings</a>. The environment variable can be set in a file <cite>.env</cite> in the root directory of this project.</p>
+<p>Example <cite>.env</cite> file</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">OPENAI_API_KEY=&quot;sk-p9GOXXXXX&lt;Your OPENAI_API_KEY&gt;&quot;</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</section>
+<section id="start-the-storytime-web-app">
+<h2>Start the Storytime web app<a class="headerlink" href="#start-the-storytime-web-app" title="Link to this heading"></a></h2>
+<p>Run Storytime with</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">storytime [markdown_file with your own story]</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>This will start a webserver on port 8501. You can access the webapp with your browser at <cite>http://localhost:8501</cite>.
+The webserver runs with <a class="reference external" href="https://streamlit.io/">streamlit</a>.</p>
+</section>
+<section id="storytime-loves-the-command-line">
+<h2>Storytime loves the command line<a class="headerlink" href="#storytime-loves-the-command-line" title="Link to this heading"></a></h2>
+<p>You can also use storytime from the command line. You can use the following commands:</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">storytime-cli [markdown_file with your own story]</span>
+<span class="go">storytime-tui [markdown_file with your own story]</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>The <cite>storytime-cli</cite> command will start a very simple command line interface.
+The <cite>storytime-tui</cite> command will start a terminal user interface made with <a class="reference external" href="https://textual.textualize.io/">Textual</a>.</p>
+</section>
+<section id="helper-script-check-integrity-of-your-story">
+<h2>Helper script: Check integrity of your story<a class="headerlink" href="#helper-script-check-integrity-of-your-story" title="Link to this heading"></a></h2>
+<p>You can check if your story is valid with the following command</p>
+<blockquote>
+<div><div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">storytime-checker [markdown_file with your own story]</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>It will check if all the choices are valid and if all dialogues are connected.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Storytime!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="story.html" class="btn btn-neutral float-right" title="Story Class" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Dronakurl.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
